@@ -316,6 +316,40 @@ export default function LandingPage() {
   const [contactLoading, setContactLoading] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
 
+  // HÀM CHUYỂN ĐỔI CHỮ LOGO THÔNG MINH (ĐỌC TỪ ADMIN ĐỂ PHÂN MÀU VÀNG Ở ĐUÔI)
+  const renderLogoText = (text) => {
+    const defaultLogo = <>Thạch<span>Pro</span></>;
+    if (!text) return defaultLogo;
+    
+    const trimmed = text.trim();
+    
+    // 1. Trường hợp dính liền có chữ viết hoa ở giữa (Ví dụ: ThạchPro)
+    const capIndices = [];
+    for (let i = 1; i < trimmed.length; i++) {
+      if (trimmed[i] === trimmed[i].toUpperCase() && trimmed[i] !== " " && isNaN(trimmed[i])) {
+        capIndices.push(i);
+      }
+    }
+    
+    if (capIndices.length > 0 && !trimmed.includes(" ")) {
+      const splitIdx = capIndices[0];
+      const part1 = trimmed.slice(0, splitIdx);
+      const part2 = trimmed.slice(splitIdx);
+      return <>{part1}<span>{part2}</span></>;
+    }
+
+    // 2. Trường hợp có khoảng trắng (Ví dụ: thach kinh thien)
+    const words = trimmed.split(" ");
+    if (words.length > 1) {
+      const lastWord = words[words.length - 1];
+      const firstPart = words.slice(0, words.length - 1).join(" ");
+      return <>{firstPart} <span>{lastWord}</span></>;
+    }
+
+    // 3. Nếu chỉ có đúng 1 từ viết thường
+    return <>{trimmed}</>;
+  };
+
   // Tự động nhận diện màn hình điện thoại để rút gọn danh mục Vật Liệu còn 4 mục/trang
   useEffect(() => {
     const updateMaterialsLimit = () => {
@@ -525,7 +559,7 @@ export default function LandingPage() {
     }
   };
 
-  // NÂNG CẤP: Gửi hồ sơ đăng ký Ứng Tuyển Tuyển Dụng
+  // Gửi hồ sơ đăng ký Ứng Tuyển Tuyển Dụng
   const submitRecruitment = async (e) => {
     e.preventDefault();
     if (!recruitForm.name || !recruitForm.phone || !recruitForm.position) {
@@ -656,19 +690,17 @@ export default function LandingPage() {
       <div id="cursor"></div>
       <div id="cursor-ring"></div>
 
-      {/* HEADER NAV (Cập nhật hiển thị đồng thời cả LOGO hình ảnh và Tên thương hiệu dạng chữ) */}
+      {/* HEADER NAV */}
       <nav id="nav" className={isScrolled ? "scrolled" : ""}>
         <a href="#" className="logo-wrap">
           {content.logo_image ? (
-            // Hiển thị LOGO bằng hình ảnh bo góc vuông vắn chuyên nghiệp
             <img src={content.logo_image} alt="Logo" style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "6px" }} />
           ) : (
-            // Nếu không có ảnh logo thì hiện icon ngôi nhà mặc định
             <div className="logo-icon">🏠</div>
           )}
-          {/* Tên thương hiệu LUÔN LUÔN HIỂN THỊ bên cạnh logo */}
+          {/* Tên thương hiệu TỰ ĐỘNG PHÂN CHIA TÔNG MÀU THÔNG MINH */}
           <span className="logo-text">
-            {content.brand_name || "ThạchPro"}<span>.</span>
+            {renderLogoText(content.brand_name)}<span>.</span>
           </span>
         </a>
         <ul className="nav-center">
@@ -921,7 +953,7 @@ export default function LandingPage() {
         <div className="about-text">
           <div className="sec-eyebrow">Về Chúng Tôi</div>
           <h2 className="sec-title">
-            {content.about_title || "Hơn 15 Năm Xây Dựng Niềm Tin"}
+            {content.about_title || "Hơn 15  Năm Xây Dựng Niềm Tin"}
           </h2>
           <p className="sec-desc">
             {content.about_desc || "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM."}
