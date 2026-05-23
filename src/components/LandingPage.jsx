@@ -296,6 +296,11 @@ export default function LandingPage() {
     experience: "",
   });
 
+  // States quản lý bộ Giả lập phòng 3D PRO
+  const [configRoom, setConfigRoom] = useState("phong-khach"); // phong-khach, phong-ngu, van-phong, phong-tam
+  const [configCeiling, setConfigCeiling] = useState("giat-cap"); // giat-cap, phang, co-dien, tran-tha
+  const [configLight, setConfigLight] = useState("vang"); // vang, trang, doi-mau, den-chum
+
   const [calcParams, setCalcParams] = useState({
     svc: 95000,
     area: 50,
@@ -316,14 +321,13 @@ export default function LandingPage() {
   const [contactLoading, setContactLoading] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
 
-  // HÀM CHUYỂN ĐỔI CHỮ LOGO THÔNG MINH (ĐỌC TỪ ADMIN ĐỂ PHÂN MÀU VÀNG Ở ĐUÔI)
+  // HÀM CHUYỂN ĐỔI CHỮ LOGO THÔNG MINH
   const renderLogoText = (text) => {
     const defaultLogo = <>Thạch<span>Pro</span></>;
     if (!text) return defaultLogo;
     
     const trimmed = text.trim();
     
-    // 1. Trường hợp dính liền có chữ viết hoa ở giữa (Ví dụ: ThạchPro)
     const capIndices = [];
     for (let i = 1; i < trimmed.length; i++) {
       if (trimmed[i] === trimmed[i].toUpperCase() && trimmed[i] !== " " && isNaN(trimmed[i])) {
@@ -338,7 +342,6 @@ export default function LandingPage() {
       return <>{part1}<span>{part2}</span></>;
     }
 
-    // 2. Trường hợp có khoảng trắng (Ví dụ: thach kinh thien)
     const words = trimmed.split(" ");
     if (words.length > 1) {
       const lastWord = words[words.length - 1];
@@ -346,7 +349,6 @@ export default function LandingPage() {
       return <>{firstPart} <span>{lastWord}</span></>;
     }
 
-    // 3. Nếu chỉ có đúng 1 từ viết thường
     return <>{trimmed}</>;
   };
 
@@ -354,9 +356,9 @@ export default function LandingPage() {
   useEffect(() => {
     const updateMaterialsLimit = () => {
       if (window.innerWidth <= 768) {
-        setMaterialsLimit(4); // Điện thoại: Chỉ hiển thị 4 vật liệu
+        setMaterialsLimit(4); 
       } else {
-        setMaterialsLimit(8); // Máy tính: Hiển thị 8 vật liệu
+        setMaterialsLimit(8); 
       }
     };
     updateMaterialsLimit();
@@ -654,6 +656,46 @@ export default function LandingPage() {
   }, [totalReviewsPages, isReviewsHovered]);
 
 
+  // HÀM CHỌN ẢNH ĐỘNG CHO TRÌNH GIẢ LẬP PHÒNG 3D PRO CHUẨN SANG TRỌNG
+  const get3DConfiguratorImage = () => {
+    // 1. Phối cảnh PHÒNG KHÁCH
+    if (configRoom === "phong-khach") {
+      if (configCeiling === "phang") return "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80";
+      if (configCeiling === "co-dien") return "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=80";
+      if (configCeiling === "tran-tha") return "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
+      // Trần giật cấp phòng khách + Các hệ đèn
+      if (configLight === "trang") return "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80";
+      if (configLight === "doi-mau") return "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80";
+      if (configLight === "den-chum") return "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80";
+      return "https://images.unsplash.com/photo-1618219908412-a29a1bb7b86e?auto=format&fit=crop&w=1200&q=80"; // Mặc định giật cấp + vàng ấm
+    }
+
+    // 2. Phối cảnh PHÒNG NGỦ
+    if (configRoom === "phong-ngu") {
+      if (configCeiling === "phang") return "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80";
+      if (configCeiling === "co-dien") return "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80";
+      if (configCeiling === "tran-tha") return "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80";
+      // Trần giật cấp phòng ngủ
+      if (configLight === "trang") return "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80";
+      return "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80"; // Mặc định giật cấp + vàng ngủ
+    }
+
+    // 3. Phối cảnh VĂN PHÒNG / THƯƠNG MẠI
+    if (configRoom === "van-phong") {
+      if (configCeiling === "tran-tha") return "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80";
+      if (configCeiling === "phang") return "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80";
+      return "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80"; // Mặc định giật cấp văn phòng
+    }
+
+    // 4. Phối cảnh PHÒNG TẮM SANG TRỌNG (Ẩm ướt dùng tấm chống ẩm)
+    if (configRoom === "phong-tam") {
+      return "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=1200&q=80";
+    }
+
+    return "https://images.unsplash.com/photo-1618219908412-a29a1bb7b86e?auto=format&fit=crop&w=1200&q=80";
+  };
+
+
   return (
     <>
       {/* KHU VỰC CSS SỬA LỖI ĐỘ ƯU TIÊN VÀ HIGHLIGHT CHO MENU/ PHÂN TRANG */}
@@ -685,6 +727,36 @@ export default function LandingPage() {
             flex-shrink: 1 !important;
           }
         }
+        /* NÂNG CẤP: CSS Cho bộ Giả lập phòng 3D Cross-fade cao cấp */
+        .config-viewport {
+          position: relative;
+          aspect-ratio: 16/10;
+          background: #0d1117;
+          border-radius: 12px;
+          border: 1px solid var(--line);
+          overflow: hidden;
+          box-shadow: 0 15px 45px rgba(0,0,0,0.4);
+        }
+        .config-layer {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .config-btn-group {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          margin-bottom: 1.2rem;
+        }
+        .config-control-card {
+          background: var(--c1);
+          border: 1px solid var(--line);
+          padding: 2.2rem;
+          border-radius: 12px;
+        }
       `}</style>
 
       <div id="cursor"></div>
@@ -698,7 +770,6 @@ export default function LandingPage() {
           ) : (
             <div className="logo-icon">🏠</div>
           )}
-          {/* Tên thương hiệu TỰ ĐỘNG PHÂN CHIA TÔNG MÀU THÔNG MINH */}
           <span className="logo-text">
             {renderLogoText(content.brand_name)}<span>.</span>
           </span>
@@ -930,6 +1001,160 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* NÂNG CẤP ĐẶC BIỆT: TRÌNH GIẢ LẬP KHÔNG GIAN PHÒNG 3D PRO CHUẨN SANG TRỌNG */}
+      <section id="configurator" style={{ background: "var(--c0)" }}>
+        <div style={{ textAlign: "center", marginBottom: "4rem" }}>
+          <div className="sec-eyebrow" style={{ justifyContent: "center" }}>Trải Nghiệm 3D</div>
+          <h2 className="sec-title">Phòng Thiết Kế Trần 3D Pro</h2>
+          <p className="sec-desc" style={{ margin: "0 auto" }}>
+            Tự tay cấu hình thử các kiểu trần thạch cao và hiệu ứng ánh sáng đèn LED thông minh trong không gian phòng khách mẫu.
+          </p>
+        </div>
+
+        <div className="calc-wrap" style={{ alignItems: "center" }}>
+          {/* Cột trái: Khung hiển thị không gian */}
+          <div className="config-viewport">
+            <div className="hero-tag" style={{ position: "absolute", top: "1rem", left: "1rem", zIndex: 10, margin: 0, padding: "0.3rem 0.8rem", background: "rgba(10,11,13,0.8)" }}>
+              <span className="dot"></span> LIVE 3D RENDER
+            </div>
+
+            {/* Render ảnh 3D động cực kỳ mượt mà dựa trên 3 bộ lựa chọn */}
+            <img
+              src={get3DConfiguratorImage()}
+              alt="Giả lập 3D"
+              style={{ width: "100%", height: "100%", objectFit: "cover", transition: "all 0.5s ease" }}
+            />
+          </div>
+
+          {/* Cột phải: Bộ bảng nút bấm điều khiển */}
+          <div className="config-control-card">
+            <div className="calc-title-bar" style={{ marginBottom: "1.5rem" }}>Bảng Tùy Biến Trần & Đèn Pro</div>
+            
+            {/* LỰA CHỌN KHÔNG GIAN PHÒNG (Đã mở rộng thêm Phòng Tắm) */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label className="form-label" style={{ marginBottom: "0.8rem" }}>1. Chọn Không Gian Thiết Kế</label>
+              <div className="config-btn-group">
+                <button
+                  onClick={() => { setConfigRoom("phong-khach"); setConfigCeiling("giat-cap"); }}
+                  className={`filter-btn ${configRoom === "phong-khach" ? "active" : ""}`}
+                >
+                  🛋️ Phòng Khách
+                </button>
+                <button
+                  onClick={() => { setConfigRoom("phong-ngu"); setConfigCeiling("giat-cap"); }}
+                  className={`filter-btn ${configRoom === "phong-ngu" ? "active" : ""}`}
+                >
+                  🛏️ Phòng Ngủ
+                </button>
+                <button
+                  onClick={() => { setConfigRoom("van-phong"); setConfigCeiling("tran-tha"); }}
+                  className={`filter-btn ${configRoom === "van-phong" ? "active" : ""}`}
+                >
+                  🏢 Văn Phòng
+                </button>
+                <button
+                  onClick={() => { setConfigRoom("phong-tam"); setConfigCeiling("phang"); }}
+                  className={`filter-btn ${configRoom === "phong-tam" ? "active" : ""}`}
+                >
+                  🛀 Phòng Tắm
+                </button>
+              </div>
+            </div>
+
+            {/* LỰA CHỌN KIỂU TRẦN */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label className="form-label" style={{ marginBottom: "0.8rem" }}>2. Chọn Kiểu Trần Thạch Cao</label>
+              <div className="config-btn-group">
+                {/* Ẩn bớt tùy chọn không phù hợp ở văn phòng và phòng tắm */}
+                {configRoom !== "van-phong" && configRoom !== "phong-tam" && (
+                  <>
+                    <button
+                      onClick={() => setConfigCeiling("giat-cap")}
+                      className={`filter-btn ${configCeiling === "giat-cap" ? "active" : ""}`}
+                    >
+                      🏛️ Trần Giật Cấp
+                    </button>
+                    <button
+                      onClick={() => setConfigCeiling("co-dien")}
+                      className={`filter-btn ${configCeiling === "co-dien" ? "active" : ""}`}
+                    >
+                      👑 Tân Cổ Điển
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => setConfigCeiling("phang")}
+                  className={`filter-btn ${configCeiling === "phang" ? "active" : ""}`}
+                >
+                  🏙️ Trần Phẳng Hiện Đại
+                </button>
+                {configRoom !== "phong-tam" && (
+                  <button
+                    onClick={() => setConfigCeiling("tran-tha")}
+                    className={`filter-btn ${configCeiling === "tran-tha" ? "active" : ""}`}
+                  >
+                    🏁 Trần Thả Tiêu Âm
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* LỰA CHỌN ÁNH SÁNG (BẢN MỚI: MỞ KHÓA HOÀN TOÀN LOGIC CHỌN ĐÈN) */}
+            <div style={{ marginBottom: "2.5rem" }}>
+              <label className="form-label" style={{ marginBottom: "0.8rem" }}>3. Chọn Hệ Ánh Sáng Đèn LED</label>
+              <div className="config-btn-group">
+                <button
+                  onClick={() => setConfigLight("vang")}
+                  className={`filter-btn ${configLight === "vang" ? "active" : ""}`}
+                >
+                  💧 LED Vàng Ấm
+                </button>
+                <button
+                  onClick={() => setConfigLight("trang")}
+                  className={`filter-btn ${configLight === "trang" ? "active" : ""}`}
+                >
+                  💡 LED Trắng Sang
+                </button>
+                {/* Đèn đổi màu và đèn chùm tân cổ điển sang trọng */}
+                {configRoom === "phong-khach" && (
+                  <>
+                    <button
+                      onClick={() => setConfigLight("doi-mau")}
+                      className={`filter-btn ${configLight === "doi-mau" ? "active" : ""}`}
+                    >
+                      🌈 LED RGB Thông Minh
+                    </button>
+                    <button
+                      onClick={() => setConfigLight("den-chum")}
+                      className={`filter-btn ${configLight === "den-chum" ? "active" : ""}`}
+                    >
+                      👑 Đèn Chùm Pha Lê
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Nút đăng ký tư vấn */}
+            <a
+              href="#contact"
+              onClick={() => {
+                const text = `Tôi muốn đăng ký tư vấn giả lập 3D: Không gian ${
+                  configRoom === "phong-khach" ? "Phòng Khách" : configRoom === "phong-ngu" ? "Phòng Ngủ" : configRoom === "phong-tam" ? "Phòng Tắm" : "Văn Phòng"
+                }, kiểu trần ${
+                  configCeiling === "giat-cap" ? "Trần Giật Cấp" : configCeiling === "phang" ? "Trần Phẳng" : configCeiling === "co-dien" ? "Tân Cổ Điển" : "Trần Thả"
+                } kết hợp ${configCeiling === "giat-cap" ? (configLight === "vang" ? "Đèn LED Vàng Ấm" : configLight === "trang" ? "Đèn LED Trắng Sang" : configLight === "den-chum" ? "Đèn Chùm Pha Lê" : "Đèn LED RGB") : "Đèn Downlight mặc định"}.`;
+                setContactForm({ ...contactForm, note: text, service: "Tư Vấn Trọn Gói" });
+              }}
+              className="btn-primary"
+              style={{ width: "100%", textAlign: "center", textDecoration: "none" }}
+            >
+              Tôi Muốn Thi Công Kiểu Này
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ABOUT */}
       <section id="about">
         <div className="about-visual">
@@ -964,7 +1189,7 @@ export default function LandingPage() {
               <div>
                 <div className="feat-title">Đội Ngũ Thợ Chuyên Nghiệp</div>
                 <div className="feat-desc">
-                  30+ thợ lành nghề với 10+ năm kinh nghiệm. Được đào tạo bài
+                  30+ thợ lành nghề with 10+ năm kinh nghiệm. Được đào tạo bài
                   bản theo tiêu chuẩn Knauf & USG.
                 </div>
               </div>
@@ -1299,7 +1524,7 @@ export default function LandingPage() {
           </div>
           <div className="calc-result">
             <div className="result-box active">
-              <div className="result-label">Ước Tính Chi Phí Nhân Công</div>
+              <div className="result-label">Ướn Tính Chi Phí Nhân Công</div>
               <div className="result-price">{calcResult}</div>
               <div className="result-unit">Chưa bao gồm VAT & vật liệu</div>
               <div className="result-bd">
@@ -2074,7 +2299,7 @@ export default function LandingPage() {
               <div>
                 <strong>{content.contact_phone || "0901 234 567"}</strong>
                 <br />
-                <small>{content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}</small>
+                <small>Hotline 7:00–18:00</small>
               </div>
             </div>
             <div className="fci">
