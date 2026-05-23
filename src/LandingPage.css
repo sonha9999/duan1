@@ -3194,11 +3194,7 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--accent2) !important;
   text-shadow: 0 0 15px rgba(245, 200, 66, 0.5) !important;
 }
-*/
-/* ==========================================================================
-   SỬA LỖI & NÂNG CẤP HIỆU ỨNG NÚT PHÂN LOẠI (CATEGORY FILTER BUTTONS)
-   ========================================================================== */
-/* Khung chứa các nút bấm */
+
 .gallery-filters {
   display: flex !important;
   flex-wrap: wrap !important;

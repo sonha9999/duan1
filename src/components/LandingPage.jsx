@@ -597,7 +597,7 @@ export default function LandingPage() {
     if (totalGalleryPages <= 1 || isGalleryHovered) return;
     const interval = setInterval(() => {
       setGalleryPage((prev) => (prev >= totalGalleryPages ? 1 : prev + 1));
-    }, 10000); 
+    }, 20000); 
     return () => clearInterval(interval);
   }, [totalGalleryPages, isGalleryHovered]);
 
@@ -606,7 +606,7 @@ export default function LandingPage() {
     if (totalMaterialsPages <= 1 || isMaterialsHovered) return;
     const interval = setInterval(() => {
       setMaterialsPage((prev) => (prev >= totalMaterialsPages ? 1 : prev + 1));
-    }, 10000); 
+    }, 20000); 
     return () => clearInterval(interval);
   }, [totalMaterialsPages, isMaterialsHovered]);
 
@@ -615,7 +615,7 @@ export default function LandingPage() {
     if (totalReviewsPages <= 1 || isReviewsHovered) return;
     const interval = setInterval(() => {
       setReviewsPage((prev) => (prev >= totalReviewsPages ? 1 : prev + 1));
-    }, 10000); 
+    }, 20000); 
     return () => clearInterval(interval);
   }, [totalReviewsPages, isReviewsHovered]);
 
