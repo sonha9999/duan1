@@ -525,7 +525,7 @@ export default function LandingPage() {
     }
   };
 
-  // Gửi hồ sơ đăng ký Ứng Tuyển Tuyển Dụng
+  // NÂNG CẤP: Gửi hồ sơ đăng ký Ứng Tuyển Tuyển Dụng
   const submitRecruitment = async (e) => {
     e.preventDefault();
     if (!recruitForm.name || !recruitForm.phone || !recruitForm.position) {
@@ -597,7 +597,7 @@ export default function LandingPage() {
     if (totalGalleryPages <= 1 || isGalleryHovered) return;
     const interval = setInterval(() => {
       setGalleryPage((prev) => (prev >= totalGalleryPages ? 1 : prev + 1));
-    }, 20000); 
+    }, 10000); 
     return () => clearInterval(interval);
   }, [totalGalleryPages, isGalleryHovered]);
 
@@ -606,7 +606,7 @@ export default function LandingPage() {
     if (totalMaterialsPages <= 1 || isMaterialsHovered) return;
     const interval = setInterval(() => {
       setMaterialsPage((prev) => (prev >= totalMaterialsPages ? 1 : prev + 1));
-    }, 20000); 
+    }, 10000); 
     return () => clearInterval(interval);
   }, [totalMaterialsPages, isMaterialsHovered]);
 
@@ -615,7 +615,7 @@ export default function LandingPage() {
     if (totalReviewsPages <= 1 || isReviewsHovered) return;
     const interval = setInterval(() => {
       setReviewsPage((prev) => (prev >= totalReviewsPages ? 1 : prev + 1));
-    }, 20000); 
+    }, 10000); 
     return () => clearInterval(interval);
   }, [totalReviewsPages, isReviewsHovered]);
 
@@ -656,19 +656,20 @@ export default function LandingPage() {
       <div id="cursor"></div>
       <div id="cursor-ring"></div>
 
-      {/* HEADER NAV */}
+      {/* HEADER NAV (Cập nhật hiển thị đồng thời cả LOGO hình ảnh và Tên thương hiệu dạng chữ) */}
       <nav id="nav" className={isScrolled ? "scrolled" : ""}>
         <a href="#" className="logo-wrap">
           {content.logo_image ? (
-            <img src={content.logo_image} alt="Logo" style={{ height: "45px", objectFit: "contain" }} />
+            // Hiển thị LOGO bằng hình ảnh bo góc vuông vắn chuyên nghiệp
+            <img src={content.logo_image} alt="Logo" style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "6px" }} />
           ) : (
-            <>
-              <div className="logo-icon">🏠</div>
-              <span className="logo-text">
-                {content.brand_name || "ThạchPro"}<span>.</span>
-              </span>
-            </>
+            // Nếu không có ảnh logo thì hiện icon ngôi nhà mặc định
+            <div className="logo-icon">🏠</div>
           )}
+          {/* Tên thương hiệu LUÔN LUÔN HIỂN THỊ bên cạnh logo */}
+          <span className="logo-text">
+            {content.brand_name || "ThạchPro"}<span>.</span>
+          </span>
         </a>
         <ul className="nav-center">
           <li>
@@ -1888,7 +1889,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* NÂNG CẤP: MODAL GIAO DIỆN TUYỂN DỤNG THỢ CỰC KỲ CHUYÊN NGHIỆP */}
+      {/* MODAL GIAO DIỆN TUYỂN DỤNG THỢ CỰC KỲ CHUYÊN NGHIỆP */}
       {showRecruitModal && (
         <div className="modal-bg open" style={{ zIndex: 1000 }}>
           <div className="modal" style={{ maxWidth: "480px" }}>
@@ -2041,7 +2042,7 @@ export default function LandingPage() {
               <div>
                 <strong>{content.contact_phone || "0901 234 567"}</strong>
                 <br />
-                <small>{content.contact_hours || "Hotline 7:00–18:00"}</small>
+                <small>{content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}</small>
               </div>
             </div>
             <div className="fci">
