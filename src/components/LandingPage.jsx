@@ -101,7 +101,7 @@ const DEFAULT_REVIEWS = [
     role: "Giám đốc Công ty TechViet",
     project: "🏢 Văn phòng 1.200m² · Quận 1",
     stars: 5,
-    text: "Đội thợ rất chuyên nghiệp, đúng giờ và sạch sẽ. Báo giá minh bạch, không phát sinh. Văn phòng 1.200m² được hoàn thiện đúng theo bản vẽ thiết kế, chất lượng vượt kỳ vọng của ban lãnh đạo.",
+    text: "Đội thợ rất chuyên nghiệp, đúng giờ and sạch sẽ. Báo giá minh bạch, không phát sinh. Văn phòng 1.200m² được hoàn thiện đúng theo bản vẽ thiết kế, chất lượng vượt kỳ vọng của ban lãnh đạo.",
   },
   {
     id: "r3",
@@ -114,10 +114,10 @@ const DEFAULT_REVIEWS = [
 ];
 
 // Cấu hình số lượng hiển thị mặc định
-const GALLERY_LIMIT = 6; // 3 cột x 2 hàng
-const REVIEWS_LIMIT = 3; // 3 cột x 1 hàng
+const GALLERY_LIMIT = 6;  // 3 cột x 2 hàng
+const REVIEWS_LIMIT = 3;   // 3 cột x 1 hàng
 
-// COMPONENT PHÂN TRANG CAO CẤP (< 1 2 3 Cuối > Tìm trang... Đi)
+// COMPONENT PHÂN TRANG CAO CẤP
 function Pagination({ currentPage, totalPages, onPageChange }) {
   const [jumpValue, setJumpValue] = useState("");
 
@@ -287,7 +287,7 @@ export default function LandingPage() {
   // State quản lý số lượng vật liệu hiển thị theo kích thước màn hình (Responsive Limit)
   const [materialsLimit, setMaterialsLimit] = useState(8);
 
-  // NÂNG CẤP: States quản lý hồ sơ ứng tuyển Tuyển Dụng
+  // States quản lý hồ sơ ứng tuyển Tuyển Dụng
   const [showRecruitModal, setShowRecruitModal] = useState(false);
   const [recruitForm, setRecruitForm] = useState({
     name: "",
@@ -333,14 +333,7 @@ export default function LandingPage() {
   // Bộ lắng nghe cuộn màn hình để tự động tô màu Menu (Scrollspy)
   useEffect(() => {
     const handleScroll = () => {
-      const sections = [
-        "services",
-        "gallery",
-        "calc",
-        "materials",
-        "reviews",
-        "contact",
-      ];
+      const sections = ["services", "gallery", "calc", "materials", "reviews", "contact"];
       const scrollPosition = window.scrollY + 250;
 
       let currentSection = "";
@@ -407,7 +400,7 @@ export default function LandingPage() {
           .from("gallery")
           .select("*")
           .order("created_at", { ascending: false });
-
+        
         if (!galleryErr && galleryData) {
           setGalleryItems(galleryData);
           setFilteredItems(galleryData);
@@ -417,37 +410,33 @@ export default function LandingPage() {
         const { data: reviewsData, error: reviewsErr } = await supabase
           .from("reviews")
           .select("*");
-
+        
         const dbReviews = reviewsData || [];
-        const combinedReviews = DEFAULT_REVIEWS.map((def) => {
-          const edited = dbReviews.find((db) => db.id === def.id);
+        const combinedReviews = DEFAULT_REVIEWS.map(def => {
+          const edited = dbReviews.find(db => db.id === def.id);
           return edited ? edited : def;
         });
-        const newlyAddedReviews = dbReviews.filter(
-          (db) => !DEFAULT_REVIEWS.some((def) => def.id === db.id)
-        );
+        const newlyAddedReviews = dbReviews.filter(db => !DEFAULT_REVIEWS.some(def => def.id === db.id));
         setReviews([...combinedReviews, ...newlyAddedReviews]);
 
         // 3. Tải danh sách vật liệu (Cộng dồn thông minh)
         const { data: materialsData, error: materialsErr } = await supabase
           .from("materials")
           .select("*");
-
+        
         const dbMaterials = materialsData || [];
-        const combinedMaterials = DEFAULT_MATERIALS.map((def) => {
-          const edited = dbMaterials.find((db) => db.id === def.id);
+        const combinedMaterials = DEFAULT_MATERIALS.map(def => {
+          const edited = dbMaterials.find(db => db.id === def.id);
           return edited ? edited : def;
         });
-        const newlyAddedMaterials = dbMaterials.filter(
-          (db) => !DEFAULT_MATERIALS.some((def) => def.id === db.id)
-        );
+        const newlyAddedMaterials = dbMaterials.filter(db => !DEFAULT_MATERIALS.some(def => def.id === db.id));
         setMaterials([...combinedMaterials, ...newlyAddedMaterials]);
 
         // 4. Tải cấu hình chữ (Content) lưu trữ trên Supabase
         const { data: contentData } = await supabase
           .from("content")
           .select("*");
-
+        
         if (contentData && contentData.length > 0) {
           const obj = {};
           contentData.forEach((item) => (obj[item.key] = item.value));
@@ -501,17 +490,19 @@ export default function LandingPage() {
     }
     setContactLoading(true);
     try {
-      const { error } = await supabase.from("contacts").insert([
-        {
-          name: contactForm.name,
-          phone: contactForm.phone,
-          email: contactForm.email,
-          service: contactForm.service,
-          area: contactForm.area,
-          address: contactForm.address,
-          note: contactForm.note,
-        },
-      ]);
+      const { error } = await supabase
+        .from("contacts")
+        .insert([
+          {
+            name: contactForm.name,
+            phone: contactForm.phone,
+            email: contactForm.email,
+            service: contactForm.service,
+            area: contactForm.area,
+            address: contactForm.address,
+            note: contactForm.note,
+          }
+        ]);
 
       if (error) throw error;
 
@@ -534,13 +525,11 @@ export default function LandingPage() {
     }
   };
 
-  // NÂNG CẤP: Gửi hồ sơ đăng ký Ứng Tuyển Tuyển Dụng
+  // Gửi hồ sơ đăng ký Ứng Tuyển Tuyển Dụng
   const submitRecruitment = async (e) => {
     e.preventDefault();
     if (!recruitForm.name || !recruitForm.phone || !recruitForm.position) {
-      alert(
-        "Vui lòng nhập đầy đủ Họ tên, Số điện thoại và Vị trí mong muốn ứng tuyển!"
-      );
+      alert("Vui lòng nhập đầy đủ Họ tên, Số điện thoại và Vị trí mong muốn ứng tuyển!");
       return;
     }
     try {
@@ -550,12 +539,10 @@ export default function LandingPage() {
           phone: recruitForm.phone,
           position: recruitForm.position,
           experience: recruitForm.experience,
-        },
+        }
       ]);
       if (error) throw error;
-      alert(
-        "Nộp hồ sơ ứng tuyển thành công! ThạchPro sẽ liên hệ trao đổi trực tiếp với bạn sớm nhất."
-      );
+      alert("Nộp hồ sơ ứng tuyển thành công! ThạchPro sẽ liên hệ trao đổi trực tiếp với bạn sớm nhất.");
       setShowRecruitModal(false);
       setRecruitForm({ name: "", phone: "", position: "", experience: "" });
     } catch {
@@ -565,12 +552,8 @@ export default function LandingPage() {
 
   // 1. Logic lọc tìm kiếm Công trình (Gallery)
   const searchedGallery = filteredItems.filter((item) => {
-    const titleMatch = item.title
-      .toLowerCase()
-      .includes(gallerySearch.toLowerCase());
-    const locMatch =
-      item.location &&
-      item.location.toLowerCase().includes(gallerySearch.toLowerCase());
+    const titleMatch = item.title.toLowerCase().includes(gallerySearch.toLowerCase());
+    const locMatch = item.location && item.location.toLowerCase().includes(gallerySearch.toLowerCase());
     return titleMatch || locMatch;
   });
   const totalGalleryPages = Math.ceil(searchedGallery.length / GALLERY_LIMIT);
@@ -581,20 +564,12 @@ export default function LandingPage() {
 
   // 2. Logic lọc tìm kiếm Vật liệu (Tối ưu số lượng limit theo thiết bị)
   const searchedMaterials = materials.filter((mat) => {
-    const nameMatch = mat.name
-      .toLowerCase()
-      .includes(materialsSearch.toLowerCase());
-    const brandMatch = mat.brand
-      .toLowerCase()
-      .includes(materialsSearch.toLowerCase());
-    const tagMatch =
-      mat.tags &&
-      mat.tags.toLowerCase().includes(materialsSearch.toLowerCase());
+    const nameMatch = mat.name.toLowerCase().includes(materialsSearch.toLowerCase());
+    const brandMatch = mat.brand.toLowerCase().includes(materialsSearch.toLowerCase());
+    const tagMatch = mat.tags && mat.tags.toLowerCase().includes(materialsSearch.toLowerCase());
     return nameMatch || brandMatch || tagMatch;
   });
-  const totalMaterialsPages = Math.ceil(
-    searchedMaterials.length / materialsLimit
-  );
+  const totalMaterialsPages = Math.ceil(searchedMaterials.length / materialsLimit);
   const currentMaterials = searchedMaterials.slice(
     (materialsPage - 1) * materialsLimit,
     materialsPage * materialsLimit
@@ -602,15 +577,9 @@ export default function LandingPage() {
 
   // 3. Logic lọc tìm kiếm Đánh giá (Reviews)
   const searchedReviews = reviews.filter((rev) => {
-    const nameMatch = rev.name
-      .toLowerCase()
-      .includes(reviewsSearch.toLowerCase());
-    const textMatch = rev.text
-      .toLowerCase()
-      .includes(reviewsSearch.toLowerCase());
-    const projMatch =
-      rev.project &&
-      rev.project.toLowerCase().includes(reviewsSearch.toLowerCase());
+    const nameMatch = rev.name.toLowerCase().includes(reviewsSearch.toLowerCase());
+    const textMatch = rev.text.toLowerCase().includes(reviewsSearch.toLowerCase());
+    const projMatch = rev.project && rev.project.toLowerCase().includes(reviewsSearch.toLowerCase());
     return nameMatch || textMatch || projMatch;
   });
   const totalReviewsPages = Math.ceil(searchedReviews.length / REVIEWS_LIMIT);
@@ -622,13 +591,13 @@ export default function LandingPage() {
   // ==========================================
   // HỆ THỐNG HẸN GIỜ TỰ ĐỘNG CHUYỂN TRANG THÔNG MINH
   // ==========================================
-
+  
   // 1. Tự động chuyển trang cho phần Công Trình (Gallery)
   useEffect(() => {
     if (totalGalleryPages <= 1 || isGalleryHovered) return;
     const interval = setInterval(() => {
       setGalleryPage((prev) => (prev >= totalGalleryPages ? 1 : prev + 1));
-    }, 10000);
+    }, 10000); 
     return () => clearInterval(interval);
   }, [totalGalleryPages, isGalleryHovered]);
 
@@ -637,7 +606,7 @@ export default function LandingPage() {
     if (totalMaterialsPages <= 1 || isMaterialsHovered) return;
     const interval = setInterval(() => {
       setMaterialsPage((prev) => (prev >= totalMaterialsPages ? 1 : prev + 1));
-    }, 10000);
+    }, 10000); 
     return () => clearInterval(interval);
   }, [totalMaterialsPages, isMaterialsHovered]);
 
@@ -646,18 +615,15 @@ export default function LandingPage() {
     if (totalReviewsPages <= 1 || isReviewsHovered) return;
     const interval = setInterval(() => {
       setReviewsPage((prev) => (prev >= totalReviewsPages ? 1 : prev + 1));
-    }, 10000);
+    }, 10000); 
     return () => clearInterval(interval);
   }, [totalReviewsPages, isReviewsHovered]);
 
+
   return (
     <>
-      {/* NÂNG CẤP ĐẶC BIỆT: TỰ ĐỘNG ĐỒNG BỘ MÀU SẮC ĐÃ CHỌN LÊN GIAO DIỆN TRANG CHỦ */}
+      {/* KHU VỰC CSS SỬA LỖI ĐỘ ƯU TIÊN VÀ HIGHLIGHT CHO MENU/ PHÂN TRANG */}
       <style>{`
-        :root {
-          --accent: ${content.color_primary || "#e8a020"} !important;
-          --accent2: ${content.color_secondary || "#f5c842"} !important;
-        }
         .nav-center a.active {
           color: var(--accent) !important;
         }
@@ -671,91 +637,61 @@ export default function LandingPage() {
           color: var(--c0) !important;
           box-shadow: 0 0 12px var(--accent) !important;
         }
+        /* NÂNG CẤP: Tự động xuống dòng danh mục lọc công trình trên di động */
+        @media (max-width: 768px) {
+          .gallery-filters {
+            overflow-x: visible !important;
+            white-space: normal !important;
+            flex-wrap: wrap !important;
+            justify-content: flex-start !important;
+            gap: 0.6rem !important;
+            padding-bottom: 0 !important;
+          }
+          .filter-btn {
+            flex-shrink: 1 !important;
+          }
+        }
       `}</style>
 
       <div id="cursor"></div>
       <div id="cursor-ring"></div>
 
-      {/* HEADER NAV (Nâng cấp tích hợp hiển thị Logo Hình Ảnh) */}
+      {/* HEADER NAV */}
       <nav id="nav" className={isScrolled ? "scrolled" : ""}>
         <a href="#" className="logo-wrap">
           {content.logo_image ? (
-            <img
-              src={content.logo_image}
-              alt="Logo"
-              style={{ height: "45px", objectFit: "contain" }}
-            />
+            <img src={content.logo_image} alt="Logo" style={{ height: "45px", objectFit: "contain" }} />
           ) : (
             <>
               <div className="logo-icon">🏠</div>
               <span className="logo-text">
-                {content.brand_name || "ThạchPro"}
-                <span>.</span>
+                {content.brand_name || "ThạchPro"}<span>.</span>
               </span>
             </>
           )}
         </a>
         <ul className="nav-center">
           <li>
-            <a
-              href="#services"
-              className={activeSection === "services" ? "active" : ""}
-            >
-              Dịch Vụ
-            </a>
+            <a href="#services" className={activeSection === "services" ? "active" : ""}>Dịch Vụ</a>
           </li>
           <li>
-            <a
-              href="#gallery"
-              className={activeSection === "gallery" ? "active" : ""}
-            >
-              Công Trình
-            </a>
+            <a href="#gallery" className={activeSection === "gallery" ? "active" : ""}>Công Trình</a>
           </li>
           <li>
-            <a
-              href="#calc"
-              className={activeSection === "calc" ? "active" : ""}
-            >
-              Báo Giá
-            </a>
+            <a href="#calc" className={activeSection === "calc" ? "active" : ""}>Báo Giá</a>
           </li>
           <li>
-            <a
-              href="#materials"
-              className={activeSection === "materials" ? "active" : ""}
-            >
-              Vật Liệu
-            </a>
+            <a href="#materials" className={activeSection === "materials" ? "active" : ""}>Vật Liệu</a>
           </li>
           <li>
-            <a
-              href="#reviews"
-              className={activeSection === "reviews" ? "active" : ""}
-            >
-              Đánh Giá
-            </a>
+            <a href="#reviews" className={activeSection === "reviews" ? "active" : ""}>Đánh Giá</a>
           </li>
           <li>
-            <a
-              href="#contact"
-              className={activeSection === "contact" ? "active" : ""}
-            >
-              Liên Hệ
-            </a>
+            <a href="#contact" className={activeSection === "contact" ? "active" : ""}>Liên Hệ</a>
           </li>
-          {/* Thêm nút Tuyển Dụng Thợ chuyên nghiệp */}
+          {/* Nút Tuyển Dụng Thợ */}
           <li>
-            <a
-              href="#recruit"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowRecruitModal(true);
-              }}
-              style={{ color: "var(--accent)", fontWeight: 700 }}
-            >
-              Tuyển Thợ 🇻🇳
-            </a>
+            <a href="#recruit" onClick={(e) => { e.preventDefault(); setShowRecruitModal(true); }} style={{ color: "var(--accent)", fontWeight: 700 }}>Tuyển Thợ 🇻🇳</a>
           </li>
         </ul>
         <div className="nav-right">
@@ -800,15 +736,7 @@ export default function LandingPage() {
         <a href="#contact" onClick={() => setMobileMenuOpen(false)}>
           Liên Hệ
         </a>
-        <a
-          href="#recruit"
-          onClick={(e) => {
-            e.preventDefault();
-            setMobileMenuOpen(false);
-            setShowRecruitModal(true);
-          }}
-          style={{ color: "var(--accent)" }}
-        >
+        <a href="#recruit" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); setShowRecruitModal(true); }} style={{ color: "var(--accent)" }}>
           Tuyển Thợ 🇻🇳
         </a>
       </div>
@@ -818,7 +746,6 @@ export default function LandingPage() {
         <div className="hero-grid"></div>
         <div className="hero-orb"></div>
         <div className="hero-orb2"></div>
-        <div className="hero-bignum">{content.about_years || "15"}</div>
         <div className="hero-content">
           <div className="hero-left">
             <div className="hero-tag">
@@ -849,21 +776,15 @@ export default function LandingPage() {
           <div className="hero-right">
             <div className="stat-box">
               <div className="stat-num">500+</div>
-              <div className="stat-lbl">
-                {content.stat1_lbl || "Công trình hoàn thành"}
-              </div>
+              <div className="stat-lbl">{content.stat1_lbl || "Công trình hoàn thành"}</div>
             </div>
             <div className="stat-box">
               <div className="stat-num">{content.about_years || "15"}+</div>
-              <div className="stat-lbl">
-                {content.stat2_lbl || "Năm kinh nghiệm"}
-              </div>
+              <div className="stat-lbl">{content.stat2_lbl || "Năm kinh nghiệm"}</div>
             </div>
             <div className="stat-box">
               <div className="stat-num">98%</div>
-              <div className="stat-lbl">
-                {content.stat3_lbl || "Khách hàng hài lòng"}
-              </div>
+              <div className="stat-lbl">{content.stat3_lbl || "Khách hàng hài lòng"}</div>
             </div>
           </div>
         </div>
@@ -1002,8 +923,7 @@ export default function LandingPage() {
             {content.about_title || "Hơn 15 Năm Xây Dựng Niềm Tin"}
           </h2>
           <p className="sec-desc">
-            {content.about_desc ||
-              "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM."}
+            {content.about_desc || "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM."}
           </p>
           <div className="feat-list">
             <div className="feat">
@@ -1022,7 +942,7 @@ export default function LandingPage() {
                 <div className="feat-title">Báo Giá Minh Bạch</div>
                 <div className="feat-desc">
                   Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng
-                  mục, vật tư rõ ràng ngay từ đầu.
+                   mục, vật tư rõ ràng ngay từ đầu.
                 </div>
               </div>
             </div>
@@ -1054,19 +974,9 @@ export default function LandingPage() {
       <section id="gallery">
         <div className="sec-eyebrow">Dự Án Tiêu Biểu</div>
         <h2 className="sec-title">Công Trình Đã Thực Hiện</h2>
-
+        
         {/* Nút lọc và Ô tìm kiếm công trình */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "1rem",
-            marginTop: "1.8rem",
-            marginBottom: "2rem",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginTop: "1.8rem", marginBottom: "2rem" }}>
           <div className="gallery-filters" style={{ margin: 0 }}>
             {[
               "all",
@@ -1078,24 +988,19 @@ export default function LandingPage() {
             ].map((cat) => (
               <button
                 key={cat}
-                className={`filter-btn ${
-                  activeCategory === cat ? "active" : ""
-                }`}
+                className={`filter-btn ${activeCategory === cat ? "active" : ""}`}
                 onClick={() => handleFilter(cat)}
               >
                 {cat === "all" ? "Tất Cả" : cat}
               </button>
             ))}
           </div>
-
+          
           <input
             type="text"
             placeholder="🔍 Tìm công trình (tiêu đề, địa điểm...)"
             value={gallerySearch}
-            onChange={(e) => {
-              setGallerySearch(e.target.value);
-              setGalleryPage(1);
-            }}
+            onChange={(e) => { setGallerySearch(e.target.value); setGalleryPage(1); }}
             className="cf-input"
             style={{ maxWidth: "350px", background: "var(--c2)", margin: 0 }}
           />
@@ -1133,8 +1038,8 @@ export default function LandingPage() {
             Không tìm thấy công trình phù hợp.
           </div>
         ) : (
-          <div
-            onMouseEnter={() => setIsGalleryHovered(true)}
+          <div 
+            onMouseEnter={() => setIsGalleryHovered(true)} 
             onMouseLeave={() => setIsGalleryHovered(false)}
           >
             <div className="gallery-grid" style={{ display: "grid" }}>
@@ -1407,41 +1312,26 @@ export default function LandingPage() {
       <section id="materials">
         <div className="sec-eyebrow">Vật Liệu</div>
         <h2 className="sec-title">Nguồn Hàng Chính Hãng</h2>
-
+        
         {/* Ô tìm kiếm vật liệu */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginBottom: "2rem",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "2rem" }}>
           <input
             type="text"
             placeholder="🔍 Tìm vật liệu (tên, hãng, nhãn...)"
             value={materialsSearch}
-            onChange={(e) => {
-              setMaterialsSearch(e.target.value);
-              setMaterialsPage(1);
-            }}
+            onChange={(e) => { setMaterialsSearch(e.target.value); setMaterialsPage(1); }}
             className="cf-input"
             style={{ maxWidth: "350px", background: "var(--c2)", margin: 0 }}
           />
         </div>
 
         {searchedMaterials.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "4rem",
-              color: "var(--muted)",
-            }}
-          >
+          <div style={{ textAlign: "center", padding: "4rem", color: "var(--muted)" }}>
             Không tìm thấy vật liệu phù hợp.
           </div>
         ) : (
-          <div
-            onMouseEnter={() => setIsMaterialsHovered(true)}
+          <div 
+            onMouseEnter={() => setIsMaterialsHovered(true)} 
             onMouseLeave={() => setIsMaterialsHovered(false)}
           >
             <div className="mat-grid" style={{ display: "grid" }}>
@@ -1540,39 +1430,24 @@ export default function LandingPage() {
         </div>
 
         {/* Ô tìm kiếm đánh giá */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginBottom: "2rem",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "2rem" }}>
           <input
             type="text"
             placeholder="🔍 Tìm đánh giá (tên, dự án, nội dung...)"
             value={reviewsSearch}
-            onChange={(e) => {
-              setReviewsSearch(e.target.value);
-              setReviewsPage(1);
-            }}
+            onChange={(e) => { setReviewsSearch(e.target.value); setReviewsPage(1); }}
             className="cf-input"
             style={{ maxWidth: "350px", background: "var(--c2)", margin: 0 }}
           />
         </div>
 
         {searchedReviews.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "4rem",
-              color: "var(--muted)",
-            }}
-          >
+          <div style={{ textAlign: "center", padding: "4rem", color: "var(--muted)" }}>
             Không tìm thấy đánh giá phù hợp.
           </div>
         ) : (
-          <div
-            onMouseEnter={() => setIsReviewsHovered(true)}
+          <div 
+            onMouseEnter={() => setIsReviewsHovered(true)} 
             onMouseLeave={() => setIsReviewsHovered(false)}
           >
             <div className="reviews-grid" style={{ display: "grid" }}>
@@ -1584,29 +1459,11 @@ export default function LandingPage() {
                   </div>
                   <p className="review-text">{item.text}</p>
                   <div className="review-author">
-                    <div
-                      className="review-av"
-                      style={{
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                    <div className="review-av" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {item.avatar ? (
-                        <img
-                          src={item.avatar}
-                          alt=""
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : item.name ? (
-                        item.name.charAt(0).toUpperCase()
+                        <img src={item.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
-                        "T"
+                        item.name ? item.name.charAt(0).toUpperCase() : "T"
                       )}
                     </div>
                     <div>
@@ -1720,9 +1577,7 @@ export default function LandingPage() {
             <div className="cta-phone-big">
               {content.contact_phone || "0901 234 567"}
             </div>
-            <div className="cta-time">
-              {content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}
-            </div>
+            <div className="cta-time">{content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}</div>
           </div>
         </div>
       </section>
@@ -1933,8 +1788,7 @@ export default function LandingPage() {
             className="map-container-clickable"
             onClick={() =>
               window.open(
-                content.contact_map_url ||
-                  "https://maps.google.com/?q=10.732498,106.717207",
+                content.contact_map_url || "https://maps.google.com/?q=10.732498,106.717207",
                 "_blank"
               )
             }
@@ -1977,10 +1831,7 @@ export default function LandingPage() {
               <span>Có bãi đậu xe miễn phí</span>
             </div>
             <a
-              href={
-                content.contact_map_url ||
-                "https://maps.google.com/?q=10.732498,106.717207"
-              }
+              href={content.contact_map_url || "https://maps.google.com/?q=10.732498,106.717207"}
               target="_blank"
               rel="noreferrer"
               className="map-cta-btn"
@@ -2041,36 +1892,14 @@ export default function LandingPage() {
       {showRecruitModal && (
         <div className="modal-bg open" style={{ zIndex: 1000 }}>
           <div className="modal" style={{ maxWidth: "480px" }}>
-            <button
-              className="modal-close"
-              onClick={() => setShowRecruitModal(false)}
-            >
-              ✕
-            </button>
+            <button className="modal-close" onClick={() => setShowRecruitModal(false)}>✕</button>
             <div className="modal-title">💼 Đăng Ký Ứng Tuyển Thợ</div>
-
-            <p
-              style={{
-                color: "var(--muted)",
-                fontSize: "0.82rem",
-                marginBottom: "1.5rem",
-                lineHeight: "1.6",
-              }}
-            >
-              {content.brand_name || "ThạchPro"} liên tục tuyển thợ chính thạch
-              cao, thợ phụ thạch cao, tổ đội thầu phụ làm việc tại TP.HCM & Bình
-              Dương.
+            
+            <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginBottom: "1.5rem", lineHeight: "1.6" }}>
+              {content.brand_name || "ThạchPro"} liên tục tuyển thợ chính thạch cao, thợ phụ thạch cao, tổ đội thầu phụ làm việc tại TP.HCM & Bình Dương. 
               <br />
-              <strong
-                style={{
-                  color: "var(--accent)",
-                  display: "block",
-                  marginTop: "0.5rem",
-                  fontSize: "0.9rem",
-                }}
-              >
-                📞 Hotline liên hệ trực tiếp Chủ:{" "}
-                {content.contact_phone || "0901 234 567"}
+              <strong style={{ color: "var(--accent)", display: "block", marginTop: "0.5rem", fontSize: "0.9rem" }}>
+                📞 Hotline liên hệ trực tiếp Chủ: {content.contact_phone || "0901 234 567"}
               </strong>
             </p>
 
@@ -2082,9 +1911,7 @@ export default function LandingPage() {
                   type="text"
                   placeholder="Nguyễn Văn A"
                   value={recruitForm.name}
-                  onChange={(e) =>
-                    setRecruitForm({ ...recruitForm, name: e.target.value })
-                  }
+                  onChange={(e) => setRecruitForm({ ...recruitForm, name: e.target.value })}
                   required
                 />
               </div>
@@ -2095,9 +1922,7 @@ export default function LandingPage() {
                   type="tel"
                   placeholder="0901 234 567"
                   value={recruitForm.phone}
-                  onChange={(e) =>
-                    setRecruitForm({ ...recruitForm, phone: e.target.value })
-                  }
+                  onChange={(e) => setRecruitForm({ ...recruitForm, phone: e.target.value })}
                   required
                 />
               </div>
@@ -2106,48 +1931,27 @@ export default function LandingPage() {
                 <select
                   className="mf-select"
                   value={recruitForm.position}
-                  onChange={(e) =>
-                    setRecruitForm({ ...recruitForm, position: e.target.value })
-                  }
+                  onChange={(e) => setRecruitForm({ ...recruitForm, position: e.target.value })}
                   required
                 >
                   <option value="">-- Chọn vị trí thợ --</option>
-                  <option value="Thợ Chính">
-                    Thợ Chính (Đóng khung trần/vách)
-                  </option>
-                  <option value="Thợ Phụ">
-                    Thợ Phụ (Bê tấm, phụ việc bắn vít)
-                  </option>
-                  <option value="Thợ Sơn Nước">
-                    Thợ Sơn Nước / Bả Bột Matit
-                  </option>
-                  <option value="Tổ Đội Thầu">
-                    Tổ Đội Thầu Phụ (Cả nhóm thợ)
-                  </option>
+                  <option value="Thợ Chính">Thợ Chính (Đóng khung trần/vách)</option>
+                  <option value="Thợ Phụ">Thợ Phụ (Bê tấm, phụ việc bắn vít)</option>
+                  <option value="Thợ Sơn Nước">Thợ Sơn Nước / Bả Bột Matit</option>
+                  <option value="Tổ Đội Thầu">Tổ Đội Thầu Phụ (Cả nhóm thợ)</option>
                 </select>
               </div>
               <div className="mf-field">
-                <label className="mf-label">
-                  Số năm kinh nghiệm & Ghi chú thêm
-                </label>
+                <label className="mf-label">Số năm kinh nghiệm & Ghi chú thêm</label>
                 <textarea
                   className="mf-textarea"
                   placeholder="Mô tả ngắn kinh nghiệm làm thạch cao của bạn..."
                   value={recruitForm.experience}
-                  onChange={(e) =>
-                    setRecruitForm({
-                      ...recruitForm,
-                      experience: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setRecruitForm({ ...recruitForm, experience: e.target.value })}
                   style={{ minHeight: "80px" }}
                 />
               </div>
-              <button
-                type="submit"
-                className="cf-submit"
-                style={{ marginTop: "1rem" }}
-              >
+              <button type="submit" className="cf-submit" style={{ marginTop: "1rem" }}>
                 📩 Nộp Hồ Sơ Ứng Tuyển
               </button>
             </form>
@@ -2161,11 +1965,7 @@ export default function LandingPage() {
           <div className="footer-brand">
             <a href="#" className="logo-wrap">
               {content.logo_image ? (
-                <img
-                  src={content.logo_image}
-                  alt="Logo"
-                  style={{ height: "45px", objectFit: "contain" }}
-                />
+                <img src={content.logo_image} alt="Logo" style={{ height: "45px", objectFit: "contain" }} />
               ) : (
                 <>
                   <div className="logo-icon">🏠</div>
@@ -2241,9 +2041,7 @@ export default function LandingPage() {
               <div>
                 <strong>{content.contact_phone || "0901 234 567"}</strong>
                 <br />
-                <small>
-                  {content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}
-                </small>
+                <small>{content.contact_hours || "Hotline 7:00–18:00"}</small>
               </div>
             </div>
             <div className="fci">
