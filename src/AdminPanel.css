@@ -808,3 +808,32 @@ tr:hover td {
     white-space: nowrap;
   }
 }
+/* ==========================================================================
+   BỔ SUNG: CÁC NÂNG CẤP MỚI CHO MODAL KÍNH MỜ & HIỂU ỨNG TRANG ADMIN
+   ========================================================================== */
+.modal-bg.open {
+  display: flex !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(10, 11, 13, 0.8) !important;
+  backdrop-filter: blur(6px) !important;
+  z-index: 9999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1.5rem !important;
+}
+
+/* Hiệu ứng bo viền phát sáng nhẹ cho các ô thẻ thống kê Dashboard */
+.stat-card {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.stat-card:hover {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 15px rgba(232, 160, 32, 0.15) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* Làm nổi bật danh mục con trỏ chuột trong bảng quản trị */
+tr:hover td {
+  background: rgba(232, 160, 32, 0.02) !important;
+}

@@ -1,3 +1,4 @@
+
 // src/components/LandingPage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../utils/supabaseClient"; // Kết trực tiếp tới Supabase
@@ -293,7 +294,7 @@ export default function LandingPage() {
     experience: "",
   });
 
-  // NÂNG CẤP: States quản lý xem các Chính Sách Pháp Lý (Bộ Công Thương)
+  // States quản lý xem các Chính Sách Pháp Lý (Bộ Công Thương)
   const [activePolicy, setActivePolicy] = useState(null); // null, "privacy", "shipping", "warranty", "payment"
 
   // States quản lý bộ Giả lập phòng 3D PRO
@@ -719,11 +720,7 @@ export default function LandingPage() {
     }
   };
 
-  // ==========================================
-  // HỆ THỐNG HẸN GIỜ TỰ ĐỘNG CHUYỂN TRANG THÔNG MINH
-  // ==========================================
-
-  // 1. Tự động chuyển trang cho phần Công Trình (Gallery)
+  // HẸN GIỜ TỰ ĐỘNG CHUYỂN TRANG
   useEffect(() => {
     if (totalGalleryPages <= 1 || isGalleryHovered) return;
     const interval = setInterval(() => {
@@ -732,7 +729,6 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [totalGalleryPages, isGalleryHovered]);
 
-  // 2. Tự động chuyển trang cho phần Vật Liệu
   useEffect(() => {
     if (totalMaterialsPages <= 1 || isMaterialsHovered) return;
     const interval = setInterval(() => {
@@ -741,7 +737,6 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [totalMaterialsPages, isMaterialsHovered]);
 
-  // 3. Tự động chuyển trang cho phần Đánh Giá (Reviews)
   useEffect(() => {
     if (totalReviewsPages <= 1 || isReviewsHovered) return;
     const interval = setInterval(() => {
@@ -749,6 +744,27 @@ export default function LandingPage() {
     }, 10000);
     return () => clearInterval(interval);
   }, [totalReviewsPages, isReviewsHovered]);
+
+  const renderLogoText = (text) => {
+    const defaultLogo = <>Thạch<span>Pro</span></>;
+    if (!text) return defaultLogo;
+    const trimmed = text.trim();
+    const capIndices = [];
+    for (let i = 1; i < trimmed.length; i++) {
+      if (trimmed[i] === trimmed[i].toUpperCase() && trimmed[i] !== " " && isNaN(trimmed[i])) {
+        capIndices.push(i);
+      }
+    }
+    if (capIndices.length > 0 && !trimmed.includes(" ")) {
+      const splitIdx = capIndices[0];
+      return <>{trimmed.slice(0, splitIdx)}<span>{trimmed.slice(splitIdx)}</span></>;
+    }
+    const words = trimmed.split(" ");
+    if (words.length > 1) {
+      return <>{words.slice(0, words.length - 1).join(" ")} <span>{words[words.length - 1]}</span></>;
+    }
+    return <>{trimmed}</>;
+  };
 
   return (
     <>
@@ -865,6 +881,10 @@ export default function LandingPage() {
             text-align: center !important;
             display: block !important;
             font-size: 0.8rem !important;
+          }
+          /* TẮT HIỆU ỨNG TRƯỢT CUỘN TRÊN ĐIỆN THOẠI - CHUYỂN SANG NHẢY TRANG TỨC THÌ */
+          html {
+            scroll-behavior: auto !important;
           }
           /* Căn giữa và đẩy sâu nút cuộn xuống đáy */
           .scroll-ind {
@@ -1191,7 +1211,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* NÂNG CẤP ĐẶC BIỆT: TRÌNH GIẢ LẬP KHÔNG GIAN PHÒNG 3D PRO CHUẨN SANG TRỌNG */}
+      {/* TRÌNH GIẢ LẬP KHÔNG GIAN PHÒNG 3D PRO */}
       <section id="configurator" style={{ background: "var(--c0)" }}>
         <div style={{ textAlign: "center", marginBottom: "4rem" }}>
           <div className="sec-eyebrow" style={{ justifyContent: "center" }}>
@@ -1298,7 +1318,7 @@ export default function LandingPage() {
                 value={configRoom}
                 onChange={(e) => {
                   setConfigRoom(e.target.value);
-                  setConfigPhotoIdx(0); // Reset về ảnh đầu tiên khi chuyển phòng
+                  setConfigPhotoIdx(0);
                 }}
                 style={{
                   background: "var(--c2)",
@@ -1410,7 +1430,7 @@ export default function LandingPage() {
                 <div className="feat-title">{"Đội Ngũ Thợ Chuyên Nghiệp"}</div>
                 <div className="feat-desc">
                   {
-                    "30+ thợ lành nghề with 10+ năm kinh nghiệm. Được đào tạo bài bản theo tiêu chuẩn Knauf & USG."
+                    "30+ thợ lành nghề với 10+ năm kinh nghiệm. Được đào tạo bài bản theo tiêu chuẩn Knauf & USG."
                   }
                 </div>
               </div>
@@ -2442,7 +2462,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* MODAL GIAO DIỆN TUYỂN DỤNG THỢ CỰC KỲ CHUYÊN NGHIỆP */}
+      {/* MODAL GIAO DIỆN TUYỂN DỤNG */}
       {showRecruitModal && (
         <div className="modal-bg open" style={{ zIndex: 1000 }}>
           <div className="modal" style={{ maxWidth: "480px" }}>

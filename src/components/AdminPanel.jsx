@@ -1,7 +1,8 @@
+
 // src/components/AdminPanel.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
-import "../AdminPanel.css";
+import "../AdminPanel.css"; // Đã kết nối với file CSS riêng biệt
 
 const DEFAULT_MATERIALS = [
   {
@@ -77,7 +78,7 @@ const DEFAULT_REVIEWS = [
     role: "Chủ hộ Vinhomes Grand Park",
     project: "🏠 Căn hộ 450m² · Trần giật cấp",
     stars: 5,
-    text: "ThạchPro hoàn thành toàn bộ trần giật cấp và vách ngăn penthouse 450m² chỉ trong 10 ngày. Bề mặt cực kỳ mịn, đường nét sắc sảo, đội thợ sạch sẽ and chuyên nghiệp. Rất hài lòng và sẽ giới thiệu cho bạn bè!",
+    text: "ThạchCaoSố1 hoàn thành toàn bộ trần giật cấp và vách ngăn penthouse 450m² chỉ trong 10 ngày. Bề mặt cực kỳ mịn, đường nét sắc sảo, đội thợ sạch sẽ and chuyên nghiệp. Rất hài lòng và sẽ giới thiệu cho bạn bè!",
   },
   {
     id: "r2",
@@ -111,19 +112,6 @@ const SIMULATOR_ROOMS = [
   "🛍️ Showroom",
   "🏛️ Biệt Thự",
 ];
-
-// Định dạng khung Style kính mờ phát sáng đồng bộ cho tất cả Modals, tránh xung đột CSS
-const MODAL_WRAPPER_STYLE = {
-  display: "flex",
-  position: "fixed",
-  inset: 0,
-  background: "rgba(10, 11, 13, 0.8)",
-  backdropFilter: "blur(6px)",
-  zIndex: 9999,
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "1.5rem",
-};
 
 const compressImage = (file, maxWidth = 1200) => {
   return new Promise((resolve, reject) => {
@@ -245,7 +233,7 @@ export default function AdminPanel() {
 
   // Cấu hình chữ trang chủ (Content Editor)
   const [configs, setConfigs] = useState({
-    brand_name: "ThạchPro",
+    brand_name: "ThạchCaoSố1",
     contact_phone: "0901 234 567",
     contact_zalo: "0901 234 567",
     contact_email: "thachpro@gmail.com",
@@ -263,10 +251,10 @@ export default function AdminPanel() {
     contact_hours: "Hotline 7:00–18:00",
     about_title: "Hơn 15 Năm Xây Dựng Niềm Tin",
     about_desc:
-      "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM.",
+      "ThạchCaoSố1 được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM.",
     cta_title: "Bắt Đầu Dự Án<br/>Của Bạn Hôm Ngày",
     cta_desc:
-      "Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchPro luôn sẵn sàng biến ý tưởng của bạn thành hiện thực.",
+      "Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchCaoSố1 luôn sẵn sàng biến ý tưởng của bạn thành hiện thực.",
     cta_btn: "📞 Gọi Ngay: 0901 234 567",
     footer_desc:
       "Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008.",
@@ -281,7 +269,7 @@ export default function AdminPanel() {
   const [recruitmentList, setRecruitmentList] = useState([]);
   const [loadingRecruitment, setLoadingRecruitment] = useState(false);
 
-  // NÂNG CẤP: States quản lý dữ liệu GIẢ LẬP 3D (Simulator)
+  // States quản lý dữ liệu GIẢ LẬP 3D (Simulator)
   const [simulatorItems, setSimulatorItems] = useState([]);
   const [loadingSimulator, setLoadingSimulator] = useState(false);
   const [showSimulatorModal, setShowSimulatorModal] = useState(false);
@@ -742,10 +730,7 @@ export default function AdminPanel() {
 
   const deleteRecruit = async (id) => {
     if (window.confirm("Xóa hồ sơ ứng tuyển này?")) {
-      const { error } = await supabase
-        .from("recruitment")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("recruitment").delete().eq("id", id);
       if (error) alert("Lỗi xóa hồ sơ: " + error.message);
       loadRecruitment();
     }
@@ -973,7 +958,7 @@ export default function AdminPanel() {
         <div className="topbar-logo">
           <div className="topbar-icon">🏠</div>
           <div className="topbar-name">
-            {configs.brand_name || "ThạchPro"}{" "}
+            {configs.brand_name || "ThạchCaoSố1"}{" "}
             <span
               style={{
                 color: "var(--muted)",
@@ -1868,7 +1853,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, contact_zalo: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1880,7 +1864,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, contact_email: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1895,7 +1878,6 @@ export default function AdminPanel() {
                         contact_address: e.target.value,
                       })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1910,7 +1892,6 @@ export default function AdminPanel() {
                         contact_map_url: e.target.value,
                       })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1922,7 +1903,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, hero_tag: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1935,7 +1915,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, hero_title: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1948,7 +1927,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, hero_sub: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1960,7 +1938,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, hero_btn1: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1972,7 +1949,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, hero_btn2: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -1986,7 +1962,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, stat1_lbl: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2000,7 +1975,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, stat2_lbl: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2014,7 +1988,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, stat3_lbl: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2026,7 +1999,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, contact_hours: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2040,7 +2012,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, about_title: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2053,7 +2024,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, about_desc: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2064,7 +2034,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, cta_title: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2075,7 +2044,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, cta_desc: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2087,7 +2055,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, cta_btn: e.target.value })
                     }
-                    required
                   />
                 </div>
                 <div className="field-row">
@@ -2100,7 +2067,6 @@ export default function AdminPanel() {
                     onChange={(e) =>
                       setConfigs({ ...configs, footer_desc: e.target.value })
                     }
-                    required
                   />
                 </div>
 
@@ -2172,7 +2138,7 @@ export default function AdminPanel() {
                               className="btn-del"
                               onClick={() => deleteRecruit(row.id)}
                             >
-                              🗑️ Xóa
+                              Xóa
                             </button>
                           </td>
                         </tr>
@@ -2194,140 +2160,6 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
-
-        {/* TAB QUẢN LÝ ALBUM ẢNH GIẢ LẬP 3D (SIMULATOR) */}
-        {activeTab === "simulator" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">
-                  🎮 Quản Lý Album Ảnh Mô Phỏng Phòng 3D
-                </div>
-                <div style={{ display: "flex", gap: ".7rem" }}>
-                  <button className="btn-refresh" onClick={loadSimulator}>
-                    🔄 Làm Mới
-                  </button>
-                  <button
-                    className="btn-add"
-                    onClick={() => {
-                      setSimulatorForm({
-                        id: "",
-                        room_name: "",
-                        image: "",
-                      });
-                      setSelectedFiles([]);
-                      setShowSimulatorModal(true);
-                    }}
-                  >
-                    ＋ Tải Ảnh Phòng 3D
-                  </button>
-                </div>
-              </div>
-              <div className="table-wrap">
-                {loadingSimulator ? (
-                  <div className="table-loading">⏳ Đang tải...</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Album Ảnh Giả Lập</th>
-                        <th>Không Gian Phòng</th>
-                        <th>Số lượng ảnh</th>
-                        <th>Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {simulatorItems.map((item) => {
-                        const imagesList = item.image
-                          ? item.image.split("|").filter(Boolean)
-                          : [];
-                        return (
-                          <tr key={item.id}>
-                            <td>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "0.3rem",
-                                  flexWrap: "wrap",
-                                  maxWidth: "300px",
-                                }}
-                              >
-                                {imagesList.map((imgUrl, imgIdx) => (
-                                  <img
-                                    key={imgIdx}
-                                    src={imgUrl}
-                                    alt=""
-                                    style={{
-                                      width: "50px",
-                                      height: "40px",
-                                      borderRadius: "4px",
-                                      objectFit: "cover",
-                                    }}
-                                    onError={(e) =>
-                                      (e.target.style.display = "none")
-                                    }
-                                  />
-                                ))}
-                                {imagesList.length === 0 && (
-                                  <span style={{ color: "var(--muted)" }}>
-                                    Chưa tải ảnh
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td
-                              className="td-title"
-                              style={{ fontSize: "1rem" }}
-                            >
-                              {item.room_name}
-                            </td>
-                            <td>
-                              <span className="cat-badge">
-                                {imagesList.length} ảnh
-                              </span>
-                            </td>
-                            <td>
-                              <div className="action-row">
-                                <button
-                                  className="btn-edit"
-                                  onClick={() => {
-                                    setSimulatorForm(item);
-                                    setSelectedFiles([]);
-                                    setShowSimulatorModal(true);
-                                  }}
-                                >
-                                  ✏️ Quản Lý Ảnh
-                                </button>
-                                <button
-                                  className="btn-del"
-                                  onClick={() => deleteSimulator(item.id)}
-                                >
-                                  🗑️ Xóa Sạch
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {simulatorItems.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan="4"
-                            style={{ textAlign: "center", padding: "2rem" }}
-                          >
-                            Chưa có phòng 3D nào được cấu hình ảnh. Hãy bấm "Tải
-                            Ảnh Phòng 3D" để bắt đầu!
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* MODAL QUẢN LÝ QUẢN LÝ ẢNH GIẢ LẬP 3D (SIMULATOR) */}
         {showSimulatorModal && (
           <div className="modal-bg open" style={MODAL_WRAPPER_STYLE}>
@@ -2469,9 +2301,7 @@ export default function AdminPanel() {
                     type="submit"
                     disabled={isSavingSimulator}
                   >
-                    {isSavingSimulator
-                      ? "⏳ ĐANG LƯU..."
-                      : "💾 LƯU ALBUM PHÒNG"}
+                    {isSavingSimulator ? "⏳ ĐANG LƯU..." : "💾 LƯU ALBUM PHÒNG"}
                   </button>
                 </div>
               </form>
@@ -2902,7 +2732,7 @@ export default function AdminPanel() {
                     <option value="🎨">🎨 Sơn nước / Bột bả</option>
                     <option value="🔧">🔧 Phụ kiện / Dụng cụ</option>
                     <option value="🚚">🚚 Vận chuyển / Giao hàng</option>
-                    <option value="🏠">🏠 Nhà ở / Văn phòng</option>
+                    <option value="🏠">🏠 Nhà ở / văn phòng</option>
                     <option value="🏗️">🏗️ Công trình / Thiết kế</option>
                     <option value="📐">📐 Kỹ thuật / Thước đo</option>
                     <option value="⚡">⚡ Tín hiệu / Sét</option>
