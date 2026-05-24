@@ -2,8 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "/", // Đã sửa: Chuyển về thư mục gốc để chạy chuẩn trên Netlify và tên miền riêng
+  // Tự động nhận diện: Nếu chạy trên Netlify (hoặc máy cục bộ) thì dùng '/', nếu chạy trên GitHub Actions thì dùng '/duan1/'
+  base: process.env.NETLIFY ? "/" : "/duan1/",
 });
