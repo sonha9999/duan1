@@ -1217,11 +1217,9 @@ export default function LandingPage() {
           <div className="sec-eyebrow" style={{ justifyContent: "center" }}>
             {"Trải Nghiệm 3D"}
           </div>
-          <h2 className="sec-title">{"Phòng Thiết Kế Trần 3D Pro"}</h2>
+          <h2 className="sec-title">{"Phòng Thiết Kế "}</h2>
           <p className="sec-desc" style={{ margin: "0 auto" }}>
-            {
-              "Tự tay cấu hình thử các kiểu trần thạch cao và hiệu ứng ánh sáng đèn LED thông minh trong không gian phòng khách mẫu."
-            }
+            {"Các Mẫu Thiết Kế Nổi Bật"}
           </p>
         </div>
 
