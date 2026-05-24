@@ -1,6 +1,6 @@
 // src/components/LandingPage.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "../utils/supabaseClient"; // Kết nối trực tiếp tới Supabase
+import { supabase } from "../utils/supabaseClient"; // Kết trực tiếp tới Supabase
 import "../LandingPage.css";
 
 const CAT_EMOJI = {
@@ -116,134 +116,6 @@ const DEFAULT_REVIEWS = [
 // Cấu hình số lượng hiển thị mặc định
 const GALLERY_LIMIT = 6; // 3 cột x 2 hàng
 const REVIEWS_LIMIT = 3; // 3 cột x 1 hàng
-
-// AN TOÀN TUYỆT ĐỐI: Tách toàn bộ CSS tùy biến ra khỏi mã JSX để tránh lỗi biên dịch của Vite
-// AN TOÀN TUYỆT ĐỐI: Tách toàn bộ CSS tùy biến ra khỏi mã JSX để tránh lỗi biên dịch của Vite
-const INLINE_CSS = `
-  .nav-center a.active {
-    color: var(--accent) !important;
-  }
-  .nav-center a.active::after {
-    width: 100% !important;
-    left: 0 !important;
-  }
-  .filter-btn.active {
-    background: var(--accent) !important;
-    border-color: var(--accent) !important;
-    color: var(--c0) !important;
-    box-shadow: 0 0 12px var(--accent) !important;
-  }
-  @media (max-width: 768px) {
-    .gallery-filters {
-      overflow-x: visible !important;
-      white-space: normal !important;
-      flex-wrap: wrap !important;
-      justify-content: flex-start !important;
-      gap: 0.6rem !important;
-      padding-bottom: 0 !important;
-    }
-    .filter-btn {
-      flex-shrink: 1 !important;
-    }
-  }
-  .config-viewport {
-    position: relative;
-    aspect-ratio: 16/10;
-    background: #0d1117;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    overflow: hidden;
-    box-shadow: 0 15px 45px rgba(0,0,0,0.4);
-  }
-  .config-layer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover !important; 
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .config-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(10, 11, 13, 0.6);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--line);
-    color: var(--text);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 15;
-  }
-  .config-arrow:hover {
-    background: var(--accent);
-    color: var(--c0);
-    border-color: var(--accent);
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 0 15px var(--accent);
-  }
-  .config-btn-group {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.2rem;
-  }
-  .config-control-card {
-    background: var(--c1);
-    border: 1px solid var(--line);
-    padding: 2.2rem;
-    border-radius: 12px;
-  }
-
-  /* NÂNG CẤP RESPONSIVE DI ĐỘNG: Tạo khoảng đệm đẩy nút Cuộn Xuống sát đáy, không lo đè chữ */
-  @media (max-width: 1024px) {
-    /* Tăng mạnh khoảng đệm dưới của khung hình Hero để chừa chỗ trống cho nút cuộn */
-    .hero {
-      padding-bottom: 11rem !important; 
-    }
-    .hero-right {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-      width: 100% !important;
-      margin: 2rem auto 0 !important;
-      gap: 1.2rem !important;
-      margin-bottom: 2rem !important; /* Đẩy chân các ô thống kê lên */
-    }
-    .stat-box {
-      width: 100% !important;
-      max-width: 340px !important;
-      text-align: center !important;
-      padding: 1.2rem 1.5rem !important;
-      height: auto !important;
-    }
-    /* Sửa khoảng cách giãn dòng chữ nhãn thống kê trên di động */
-    .stat-lbl {
-      line-height: 1.5 !important;
-      text-align: center !important;
-      display: block !important;
-      font-size: 0.8rem !important;
-    }
-    /* KHÔI PHỤC & CĂN CHỈNH: Căn giữa và đẩy sâu nút cuộn xuống đáy */
-    .scroll-ind {
-      display: flex !important;
-      position: absolute !important;
-      bottom: 2rem !important; /* Đặt sát mép đáy */
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      z-index: 50 !important;
-    }
-  }
-`;
 
 // COMPONENT PHÂN TRANG CAO CẤP
 function Pagination({ currentPage, totalPages, onPageChange }) {
@@ -421,6 +293,9 @@ export default function LandingPage() {
     experience: "",
   });
 
+  // NÂNG CẤP: States quản lý xem các Chính Sách Pháp Lý (Bộ Công Thương)
+  const [activePolicy, setActivePolicy] = useState(null); // null, "privacy", "shipping", "warranty", "payment"
+
   // States quản lý bộ Giả lập phòng 3D PRO
   const [configRoom, setConfigRoom] = useState("🛋️ Phòng Khách");
   const [configPhotoIdx, setConfigPhotoIdx] = useState(0);
@@ -450,54 +325,6 @@ export default function LandingPage() {
   });
   const [contactLoading, setContactLoading] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
-
-  // HÀM CHUYỂN ĐỔI CHỮ LOGO THÔNG MINH
-  const renderLogoText = (text) => {
-    const defaultLogo = (
-      <>
-        Thạch<span>Pro</span>
-      </>
-    );
-    if (!text) return defaultLogo;
-
-    const trimmed = text.trim();
-
-    const capIndices = [];
-    for (let i = 1; i < trimmed.length; i++) {
-      if (
-        trimmed[i] === trimmed[i].toUpperCase() &&
-        trimmed[i] !== " " &&
-        isNaN(trimmed[i])
-      ) {
-        capIndices.push(i);
-      }
-    }
-
-    if (capIndices.length > 0 && !trimmed.includes(" ")) {
-      const splitIdx = capIndices[0];
-      const part1 = trimmed.slice(0, splitIdx);
-      const part2 = trimmed.slice(splitIdx);
-      return (
-        <>
-          {part1}
-          <span>{part2}</span>
-        </>
-      );
-    }
-
-    const words = trimmed.split(" ");
-    if (words.length > 1) {
-      const lastWord = words[words.length - 1];
-      const firstPart = words.slice(0, words.length - 1).join(" ");
-      return (
-        <>
-          {firstPart} <span>{lastWord}</span>
-        </>
-      );
-    }
-
-    return <>{trimmed}</>;
-  };
 
   // Tự động nhận diện màn hình điện thoại để rút gọn danh mục Vật Liệu còn 4 mục/trang
   useEffect(() => {
@@ -760,7 +587,7 @@ export default function LandingPage() {
     }
   };
 
-  // SỬA LỖI CHÍ MẠNG (AN TOÀN TUYỆT ĐỐI): Bộ quét lọc tìm kiếm có kiểm tra điều kiện trống tránh sập trang (Vàng đen thui)
+  // SỬA LỖI CHÍ MẠNG (AN TOÀN TUYỆT ĐỐI)
   const searchedGallery = filteredItems.filter((item) => {
     const titleStr = item.title ? item.title.toLowerCase() : "";
     const locStr = item.location && item.location.toLowerCase();
@@ -825,7 +652,6 @@ export default function LandingPage() {
       if (urls.length > 0) return urls;
     }
 
-    // Các phối cảnh trần thạch cao thi công nội thất chính xác
     const defaultMap = {
       "🛋️ Phòng Khách": [
         "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80",
@@ -884,32 +710,184 @@ export default function LandingPage() {
       " - Ảnh số " +
       currentPhotoNum +
       "].";
-
-    // Ghi nhận vào state form liên hệ
     setContactForm({ ...contactForm, note: text, service: "Tư Vấn Trọn Gói" });
-
-    // Ghi nhận link ảnh Supabase vào bộ nhớ ẩn riêng biệt
     setSelectedSimulatorUrl(currentPhotoUrlString);
 
-    // Cuộn mượt mà về vùng nhận form liên hệ (#contact)
     const contactSection = document.getElementById("contact");
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: "smooth" });
     }
   };
 
+  // ==========================================
+  // HỆ THỐNG HẸN GIỜ TỰ ĐỘNG CHUYỂN TRANG THÔNG MINH
+  // ==========================================
+
+  // 1. Tự động chuyển trang cho phần Công Trình (Gallery)
+  useEffect(() => {
+    if (totalGalleryPages <= 1 || isGalleryHovered) return;
+    const interval = setInterval(() => {
+      setGalleryPage((prev) => (prev >= totalGalleryPages ? 1 : prev + 1));
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [totalGalleryPages, isGalleryHovered]);
+
+  // 2. Tự động chuyển trang cho phần Vật Liệu
+  useEffect(() => {
+    if (totalMaterialsPages <= 1 || isMaterialsHovered) return;
+    const interval = setInterval(() => {
+      setMaterialsPage((prev) => (prev >= totalMaterialsPages ? 1 : prev + 1));
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [totalMaterialsPages, isMaterialsHovered]);
+
+  // 3. Tự động chuyển trang cho phần Đánh Giá (Reviews)
+  useEffect(() => {
+    if (totalReviewsPages <= 1 || isReviewsHovered) return;
+    const interval = setInterval(() => {
+      setReviewsPage((prev) => (prev >= totalReviewsPages ? 1 : prev + 1));
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [totalReviewsPages, isReviewsHovered]);
+
   return (
     <>
       {/* KHU VỰC CSS SỬA LỖI ĐỘ ƯU TIÊN VÀ HIGHLIGHT CHO MENU/ PHÂN TRANG */}
-      <style dangerouslySetInnerHTML={{ __html: INLINE_CSS }} />
+      <style>{`
+        .nav-center a.active {
+          color: var(--accent) !important;
+        }
+        .nav-center a.active::after {
+          width: 100% !important;
+          left: 0 !important;
+        }
+        .filter-btn.active {
+          background: var(--accent) !important;
+          border-color: var(--accent) !important;
+          color: var(--c0) !important;
+          box-shadow: 0 0 12px var(--accent) !important;
+        }
+        /* NÂNG CẤP: Tự động xuống dòng danh mục lọc công trình trên di động */
+        @media (max-width: 768px) {
+          .gallery-filters {
+            overflow-x: visible !important;
+            white-space: normal !important;
+            flex-wrap: wrap !important;
+            justify-content: flex-start !important;
+            gap: 0.6rem !important;
+            padding-bottom: 0 !important;
+          }
+          .filter-btn {
+            flex-shrink: 1 !important;
+          }
+        }
+        .config-viewport {
+          position: relative;
+          aspect-ratio: 16/10;
+          background: #0d1117;
+          border-radius: 12px;
+          border: 1px solid var(--line);
+          overflow: hidden;
+          box-shadow: 0 15px 45px rgba(0,0,0,0.4);
+        }
+        .config-layer {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover !important; 
+          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .config-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: rgba(10, 11, 13, 0.6);
+          backdrop-filter: blur(8px);
+          border: 1px solid var(--line);
+          color: var(--text);
+          font-size: 1.1rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          z-index: 15;
+        }
+        .config-arrow:hover {
+          background: var(--accent);
+          color: var(--c0);
+          border-color: var(--accent);
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 0 15px var(--accent);
+        }
+        .config-btn-group {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          margin-bottom: 1.2rem;
+        }
+        .config-control-card {
+          background: var(--c1);
+          border: 1px solid var(--line);
+          padding: 2.2rem;
+          border-radius: 12px;
+        }
+
+        /* NÂNG CẤP RESPONSIVE DI ĐỘNG: Căn giữa tuyệt đối các thẻ thống kê và vạch vàng trang trí */
+        @media (max-width: 1024px) {
+          /* Tăng cực mạnh khoảng đệm dưới của khung hình Hero để chừa chỗ trống cho nút cuộn */
+          .hero {
+            padding-bottom: 11rem !important; 
+          }
+          .hero-right {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            margin: 2rem auto 0 !important;
+            gap: 1.2rem !important;
+            margin-bottom: 2rem !important; /* Đẩy chân các ô thống kê lên */
+          }
+          .stat-box {
+            width: 100% !important;
+            max-width: 340px !important;
+            text-align: center !important;
+            padding: 1.2rem 1.5rem !important;
+            height: auto !important;
+          }
+          /* Sửa khoảng cách giãn dòng chữ nhãn thống kê trên di động */
+          .stat-lbl {
+            line-height: 1.5 !important;
+            text-align: center !important;
+            display: block !important;
+            font-size: 0.8rem !important;
+          }
+          /* Căn giữa và đẩy sâu nút cuộn xuống đáy */
+          .scroll-ind {
+            display: flex !important;
+            position: absolute !important;
+            bottom: 2rem !important; /* Đặt sát mép đáy */
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            z-index: 50 !important;
+          }
+        }
+      `}</style>
 
       <div id="cursor"></div>
       <div id="cursor-ring"></div>
 
-      {/* HEADER NAV */}
+      {/* HEADER NAV (Cập nhật hiển thị đồng thời cả LOGO hình ảnh và Tên thương hiệu dạng chữ) */}
       <nav id="nav" className={isScrolled ? "scrolled" : ""}>
         <a href="#" className="logo-wrap">
           {content.logo_image ? (
+            // Hiển thị LOGO bằng hình ảnh bo góc vuông vắn chuyên nghiệp
             <img
               src={content.logo_image}
               alt="Logo"
@@ -921,10 +899,12 @@ export default function LandingPage() {
               }}
             />
           ) : (
+            // Nếu không có ảnh logo thì hiện icon ngôi nhà mặc định
             <div className="logo-icon">🏠</div>
           )}
+          {/* Tên thương hiệu LUÔN LUÔN HIỂN THỊ bên cạnh logo */}
           <span className="logo-text">
-            {renderLogoText(content.brand_name)}
+            {content.brand_name || "ThạchPro"}
             <span>.</span>
           </span>
         </a>
@@ -1217,14 +1197,16 @@ export default function LandingPage() {
           <div className="sec-eyebrow" style={{ justifyContent: "center" }}>
             {"Trải Nghiệm 3D"}
           </div>
-          <h2 className="sec-title">{"Phòng Thiết Kế "}</h2>
+          <h2 className="sec-title">{"Phòng Thiết Kế Trần 3D Pro"}</h2>
           <p className="sec-desc" style={{ margin: "0 auto" }}>
-            {"Các Mẫu Thiết Kế Nổi Bật"}
+            {
+              "Tự tay cấu hình thử các kiểu trần thạch cao và hiệu ứng ánh sáng đèn LED thông minh trong không gian phòng khách mẫu."
+            }
           </p>
         </div>
 
         <div className="calc-wrap" style={{ alignItems: "center" }}>
-          {/* Cột trái: Khung hiển thị không gian (Hỗ trợ lướt ảnh Trái/Phải thủ công) */}
+          {/* Cột trái: Khung hiển thị không gian */}
           <div
             className="config-viewport"
             onMouseEnter={() => setIsGalleryHovered(true)}
@@ -1257,7 +1239,7 @@ export default function LandingPage() {
               }}
             />
 
-            {/* Nút bấm chuyển ảnh Trái/Phải thủ công dạng Kính Mờ (Glassmorphism) phát sáng cực đẹp */}
+            {/* Nút bấm chuyển ảnh Trái/Phải thủ công */}
             {activePhotosList.length > 1 && (
               <>
                 <button
@@ -2577,6 +2559,206 @@ export default function LandingPage() {
         </div>
       )}
 
+      {/* CỬA SỔ POPUP XEM CHÍNH SÁCH BẮT BUỘC BỞI BỘ CÔNG THƯƠNG */}
+      {activePolicy && (
+        <div
+          className="modal-bg open"
+          style={{
+            display: "flex",
+            position: "fixed",
+            inset: 0,
+            background: "rgba(10, 11, 13, 0.8)",
+            backdropFilter: "blur(6px)",
+            zIndex: 10000,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1.5rem",
+          }}
+        >
+          <div
+            className="modal"
+            style={{ maxWidth: "600px", maxHeight: "80vh", overflowY: "auto" }}
+          >
+            <button
+              className="modal-close"
+              onClick={() => setActivePolicy(null)}
+            >
+              ✕
+            </button>
+
+            {activePolicy === "privacy" && (
+              <>
+                <div className="modal-title">
+                  🔒 Chính Sách Bảo Mật Thông Tin
+                </div>
+                <div
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: "0.85rem",
+                    lineHeight: "1.7",
+                    textAlign: "justify",
+                  }}
+                >
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>1. Mục đích thu thập thông tin:</strong> Chúng tôi
+                    chỉ thu thập thông tin cá nhân của khách hàng (Họ tên, SĐT,
+                    Email, Địa chỉ) phục vụ cho mục đích tư vấn, khảo sát thực
+                    tế và báo giá thi công thạch cao.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>2. Phạm vi sử dụng thông tin:</strong> Thông tin của
+                    khách hàng chỉ được sử dụng nội bộ tại hệ thống cửa hàng và
+                    tổ đội thi công của chúng tôi. Chúng tôi cam kết không chia
+                    sẻ, bán hay tiết lộ thông tin của bạn cho bất kỳ bên thứ ba
+                    nào.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>3. Thời gian lưu trữ thông tin:</strong> Dữ liệu
+                    khách hàng sẽ được lưu trữ an toàn bảo mật trên hệ thống máy
+                    chủ cơ sở dữ liệu của chúng tôi cho đến khi hoàn thành công
+                    trình hoặc khi có yêu cầu xóa từ phía khách hàng.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>4. Cam kết bảo mật:</strong> Hệ thống database của
+                    chúng tôi được bảo mật tuyệt đối. Chúng tôi chịu hoàn toàn
+                    trách nhiệm trước pháp luật về việc bảo vệ thông tin cá nhân
+                    của bạn.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {activePolicy === "shipping" && (
+              <>
+                <div className="modal-title">
+                  🚚 Chính Sách Giao Nhận Vật Tư
+                </div>
+                <div
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: "0.85rem",
+                    lineHeight: "1.7",
+                    textAlign: "justify",
+                  }}
+                >
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>1. Phạm vi áp dụng:</strong> Chúng tôi hỗ trợ giao
+                    nhận tấm thạch cao, khung xương thép và các phụ kiện thi
+                    công tận nơi cho toàn bộ công trình tại khu vực TP.HCM, Bình
+                    Dương và Long An.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>2. Thời gian giao hàng:</strong> Hàng sẽ được vận
+                    chuyển bằng xe chuyên dụng đến công trình của bạn trong vòng
+                    24 giờ kể từ khi hai bên chốt đơn giá và khối lượng vật tư.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>3. Đồng kiểm khi nhận hàng:</strong> Khách hàng hoặc
+                    đại diện giám sát công trình có quyền và nghĩa vụ kiểm tra
+                    kỹ số lượng, chủng loại, nhãn mác vật tư (Knauf, USG, Vĩnh
+                    Tường...) trước khi ký biên bản bàn giao nhận hàng tại công
+                    trình.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {activePolicy === "warranty" && (
+              <>
+                <div className="modal-title">
+                  🛡️ Chính Sách Bảo Hành Công Trình
+                </div>
+                <div
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: "0.85rem",
+                    lineHeight: "1.7",
+                    textAlign: "justify",
+                  }}
+                >
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>1. Thời gian bảo hành:</strong> Cam kết bảo hành kết
+                    cấu khung xương và tấm thạch cao (không nứt nẻ, không võng
+                    sệ trần) lên tới **24 tháng** kể từ ngày ký biên bản bàn
+                    giao nghiệm thu công trình.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>2. Điều kiện được bảo hành:</strong> Các lỗi kỹ
+                    thuật phát sinh do quá trình thi công của đội thợ (bắn vít
+                    lệch, khoảng cách ty treo sai kỹ thuật, xử lý mối nối thạch
+                    cao không phẳng...).
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>3. Trường hợp không được bảo hành:</strong> Trần
+                    vách bị ẩm ướt, sũng nước do mái tôn của khách hàng bị dột,
+                    vỡ đường ống nước của căn hộ, hoặc các tác động cơ học ngoại
+                    lực va đập mạnh làm vỡ trần vách.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>4. Thời gian khắc phục sự cố:</strong> Sau khi tiếp
+                    nhận thông tin phản hồi từ khách hàng, đội thợ của chúng tôi
+                    sẽ có mặt khảo sát và xử lý sửa chữa trong vòng **48 giờ làm
+                    việc**.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {activePolicy === "payment" && (
+              <>
+                <div className="modal-title">💳 Phương Thức Thanh Toán</div>
+                <div
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: "0.85rem",
+                    lineHeight: "1.7",
+                    textAlign: "justify",
+                  }}
+                >
+                  <p style={{ marginBottom: "1rem" }}>
+                    Để thuận tiện nhất cho khách hàng, chúng tôi áp dụng 2
+                    phương thức thanh toán linh hoạt:
+                  </p>
+                  <p style={{ marginBottom: "1.2rem" }}>
+                    <strong>Cách 1: Thanh toán bằng Tiền mặt</strong>
+                    <br />
+                    Khách hàng có thể thanh toán trực tiếp bằng tiền mặt cho chủ
+                    thầu hoặc đại diện giám sát kỹ thuật của chúng tôi tại công
+                    trình sau khi hoàn thành nghiệm thu từng giai đoạn.
+                  </p>
+                  <p style={{ marginBottom: "1.2rem" }}>
+                    <strong>Cách 2: Thanh toán chuyển khoản Ngân hàng</strong>
+                    <br />
+                    Bạn có thể thực hiện chuyển khoản ngân hàng qua ứng dụng
+                    Mobile Banking của tất cả các ngân hàng tại Việt Nam. Vui
+                    lòng liên hệ số Hotline để nhận số tài khoản ngân hàng chính
+                    thức trước khi chuyển khoản đặt cọc.
+                  </p>
+                  <p style={{ marginBottom: "1rem" }}>
+                    <strong>Quy trình tạm ứng/thanh toán:</strong>
+                    <br />- Đợt 1: Tạm ứng 30% - 50% chi phí vật tư khi hàng cập
+                    bến công trình để bắt đầu thi công.
+                    <br />- Đợt 2: Thanh toán phần còn lại sau khi tiến hành đo
+                    đạc khối lượng thực tế và nghiệm thu bàn giao công trình
+                    phẳng đẹp hoàn tất.
+                  </p>
+                </div>
+              </>
+            )}
+
+            <div className="modal-footer" style={{ marginTop: "1.5rem" }}>
+              <button
+                className="btn-cancel"
+                style={{ width: "100%" }}
+                onClick={() => setActivePolicy(null)}
+              >
+                Đóng cửa sổ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer>
         <div className="footer-grid">
@@ -2686,11 +2868,65 @@ export default function LandingPage() {
 
         {/* FOOTER BOTTOM VỚI HUY HIỆU LA BÀN ĐỊNH VỊ CHỦ QUYỀN BIỂN ĐẢO */}
         <div className="footer-bottom">
-          <p>
-            {"© 2024 "}
-            <span>{content.brand_name || "ThạchPro"}</span>
-            {". Tất cả quyền được bảo lưu."}
-          </p>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+          >
+            <p>
+              {"© 2024 "}
+              <span>{content.brand_name || "ThạchPro"}</span>
+              {". Tất cả quyền được bảo lưu."}
+            </p>
+            {/* THÊM KHU VỰC CÁC ĐƯỜNG LINK CHÍNH SÁCH PHÁP LÝ (BẮT BUỘC BỞI BỘ CÔNG THƯƠNG) */}
+            <div
+              style={{
+                display: "flex",
+                gap: "1rem",
+                flexWrap: "wrap",
+                fontSize: "0.75rem",
+              }}
+            >
+              <a
+                href="#privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActivePolicy("privacy");
+                }}
+                style={{ color: "var(--muted)", textDecoration: "underline" }}
+              >
+                Bảo mật thông tin
+              </a>
+              <a
+                href="#shipping"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActivePolicy("shipping");
+                }}
+                style={{ color: "var(--muted)", textDecoration: "underline" }}
+              >
+                Giao nhận vật tư
+              </a>
+              <a
+                href="#warranty"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActivePolicy("warranty");
+                }}
+                style={{ color: "var(--muted)", textDecoration: "underline" }}
+              >
+                Bảo hành công trình
+              </a>
+              <a
+                href="#payment"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActivePolicy("payment");
+                }}
+                style={{ color: "var(--muted)", textDecoration: "underline" }}
+              >
+                Phương thức thanh toán
+              </a>
+            </div>
+          </div>
 
           <div
             className="vn-sovereignty-badge"
