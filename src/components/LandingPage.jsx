@@ -114,8 +114,8 @@ const DEFAULT_REVIEWS = [
 ];
 
 // Cấu hình số lượng hiển thị mặc định
-const GALLERY_LIMIT = 6;  // 3 cột x 2 hàng
-const REVIEWS_LIMIT = 3;   // 3 cột x 1 hàng
+const GALLERY_LIMIT = 6; // 3 cột x 2 hàng
+const REVIEWS_LIMIT = 3; // 3 cột x 1 hàng
 
 // AN TOÀN TUYỆT ĐỐI: Tách toàn bộ CSS tùy biến ra khỏi mã JSX để tránh lỗi biên dịch của Vite
 const INLINE_CSS = `
@@ -159,8 +159,33 @@ const INLINE_CSS = `
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover !important; 
     transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .config-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(10, 11, 13, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 15;
+  }
+  .config-arrow:hover {
+    background: var(--accent);
+    color: var(--c0);
+    border-color: var(--accent);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 15px var(--accent);
   }
   .config-btn-group {
     display: flex;
@@ -173,6 +198,41 @@ const INLINE_CSS = `
     border: 1px solid var(--line);
     padding: 2.2rem;
     border-radius: 12px;
+  }
+
+  /* NÂNG CẤP RESPONSIVE DI ĐỘNG: Căn giữa tuyệt đối các thẻ thống kê và vạch vàng trang trí */
+  @media (max-width: 1024px) {
+    .hero-right {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100% !important;
+      margin: 2rem auto 0 !important;
+      gap: 1.2rem !important;
+    }
+    .stat-box {
+      width: 100% !important;
+      max-width: 340px !important;
+      text-align: center !important;
+      padding: 1.2rem 1.5rem !important;
+      height: auto !important;
+    }
+    /* SỬA LỖI ĐÈ CHỮ: Giãn khoảng cách dòng chữ nhãn thống kê luôn vuông vắn dễ đọc */
+    .stat-lbl {
+      line-height: 1.5 !important;
+      text-align: center !important;
+      display: block !important;
+      font-size: 0.8rem !important;
+    }
+    /* Căn giữa vạch chỉ hướng vàng trên di động */
+    .scroll-ind {
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+    }
   }
 `;
 
@@ -217,7 +277,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         flexWrap: "wrap",
       }}
     >
-      {/* Nút lùi trang (ẨN KHI ĐANG Ở TRANG 1) */}
+      {/* Nút lùi trang ‹ (ẨN KHI ĐANG Ở TRANG 1) */}
       {currentPage > 1 && (
         <button
           onClick={() => onPageChange(currentPage - 1)}
@@ -243,7 +303,6 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         </button>
       ))}
 
-      {/* Nút Nhảy về Trang Cuối (ẨN KHI ĐANG Ở TRANG CUỐI) */}
       {currentPage < totalPages && (
         <button
           onClick={() => onPageChange(totalPages)}
@@ -251,11 +310,10 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
           style={{ padding: "0.4rem 0.8rem" }}
           title="Trang cuối"
         >
-          Cuối
+          {"Cuối"}
         </button>
       )}
 
-      {/* Nút tiến trang (ẨN KHI ĐANG Ở TRANG CUỐI) */}
       {currentPage < totalPages && (
         <button
           onClick={() => onPageChange(currentPage + 1)}
@@ -267,7 +325,6 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         </button>
       )}
 
-      {/* Ô nhảy nhanh trang */}
       <form
         onSubmit={handleJump}
         style={{
@@ -304,7 +361,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
             borderColor: "rgba(232, 160, 32, 0.2)",
           }}
         >
-          Đi
+          {"Đi"}
         </button>
       </form>
     </div>
@@ -356,13 +413,14 @@ export default function LandingPage() {
   });
 
   // States quản lý bộ Giả lập phòng 3D PRO
-  const [configRoom, setConfigRoom] = useState("🛋️ Phòng Khách"); 
-  const [configCeiling, setConfigCeiling] = useState("giat-cap"); 
-  const [configLight, setConfigLight] = useState("vang"); 
+  const [configRoom, setConfigRoom] = useState("🛋️ Phòng Khách");
+  const [configPhotoIdx, setConfigPhotoIdx] = useState(0);
 
-  // States quản lý dữ liệu GIẢ LẬP 3D (Tự động tải từ Supabase)
+  // States quản lý dữ liệu GIẢ LẬP 3D
   const [simulatorItems, setSimulatorItems] = useState([]);
-  const [configPhotoIdx, setConfigPhotoIdx] = useState(0); 
+
+  // States bộ nhớ ẩn chứa link ảnh thực tế khi gửi về Admin
+  const [selectedSimulatorUrl, setSelectedSimulatorUrl] = useState("");
 
   const [calcParams, setCalcParams] = useState({
     svc: 95000,
@@ -386,30 +444,47 @@ export default function LandingPage() {
 
   // HÀM CHUYỂN ĐỔI CHỮ LOGO THÔNG MINH
   const renderLogoText = (text) => {
-    const defaultLogo = <>Thạch<span>Pro</span></>;
+    const defaultLogo = (
+      <>
+        Thạch<span>Pro</span>
+      </>
+    );
     if (!text) return defaultLogo;
-    
+
     const trimmed = text.trim();
-    
+
     const capIndices = [];
     for (let i = 1; i < trimmed.length; i++) {
-      if (trimmed[i] === trimmed[i].toUpperCase() && trimmed[i] !== " " && isNaN(trimmed[i])) {
+      if (
+        trimmed[i] === trimmed[i].toUpperCase() &&
+        trimmed[i] !== " " &&
+        isNaN(trimmed[i])
+      ) {
         capIndices.push(i);
       }
     }
-    
+
     if (capIndices.length > 0 && !trimmed.includes(" ")) {
       const splitIdx = capIndices[0];
       const part1 = trimmed.slice(0, splitIdx);
       const part2 = trimmed.slice(splitIdx);
-      return <>{part1}<span>{part2}</span></>;
+      return (
+        <>
+          {part1}
+          <span>{part2}</span>
+        </>
+      );
     }
 
     const words = trimmed.split(" ");
     if (words.length > 1) {
       const lastWord = words[words.length - 1];
       const firstPart = words.slice(0, words.length - 1).join(" ");
-      return <>{firstPart} <span>{lastWord}</span></>;
+      return (
+        <>
+          {firstPart} <span>{lastWord}</span>
+        </>
+      );
     }
 
     return <>{trimmed}</>;
@@ -419,9 +494,9 @@ export default function LandingPage() {
   useEffect(() => {
     const updateMaterialsLimit = () => {
       if (window.innerWidth <= 768) {
-        setMaterialsLimit(4); 
+        setMaterialsLimit(4);
       } else {
-        setMaterialsLimit(8); 
+        setMaterialsLimit(8);
       }
     };
     updateMaterialsLimit();
@@ -432,7 +507,14 @@ export default function LandingPage() {
   // Bộ lắng nghe cuộn màn hình để tự động tô màu Menu (Scrollspy)
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ["services", "gallery", "calc", "materials", "reviews", "contact"];
+      const sections = [
+        "services",
+        "gallery",
+        "calc",
+        "materials",
+        "reviews",
+        "contact",
+      ];
       const scrollPosition = window.scrollY + 250;
 
       let currentSection = "";
@@ -499,7 +581,7 @@ export default function LandingPage() {
           .from("gallery")
           .select("*")
           .order("created_at", { ascending: false });
-        
+
         if (!galleryErr && galleryData) {
           setGalleryItems(galleryData);
           setFilteredItems(galleryData);
@@ -509,33 +591,37 @@ export default function LandingPage() {
         const { data: reviewsData, error: reviewsErr } = await supabase
           .from("reviews")
           .select("*");
-        
+
         const dbReviews = reviewsData || [];
-        const combinedReviews = DEFAULT_REVIEWS.map(def => {
-          const edited = dbReviews.find(db => db.id === def.id);
+        const combinedReviews = DEFAULT_REVIEWS.map((def) => {
+          const edited = dbReviews.find((db) => db.id === def.id);
           return edited ? edited : def;
         });
-        const newlyAddedReviews = dbReviews.filter(db => !DEFAULT_REVIEWS.some(def => def.id === db.id));
+        const newlyAddedReviews = dbReviews.filter(
+          (db) => !DEFAULT_REVIEWS.some((def) => def.id === db.id)
+        );
         setReviews([...combinedReviews, ...newlyAddedReviews]);
 
         // 3. Tải danh sách vật liệu (Cộng dồn thông minh)
         const { data: materialsData, error: materialsErr } = await supabase
           .from("materials")
           .select("*");
-        
+
         const dbMaterials = materialsData || [];
-        const combinedMaterials = DEFAULT_MATERIALS.map(def => {
-          const edited = dbMaterials.find(db => db.id === def.id);
+        const combinedMaterials = DEFAULT_MATERIALS.map((def) => {
+          const edited = dbMaterials.find((db) => db.id === def.id);
           return edited ? edited : def;
         });
-        const newlyAddedMaterials = dbMaterials.filter(db => !DEFAULT_MATERIALS.some(def => def.id === db.id));
+        const newlyAddedMaterials = dbMaterials.filter(
+          (db) => !DEFAULT_MATERIALS.some((def) => def.id === db.id)
+        );
         setMaterials([...combinedMaterials, ...newlyAddedMaterials]);
 
         // 4. Tải cấu hình chữ (Content) lưu trữ trên Supabase
         const { data: contentData } = await supabase
           .from("content")
           .select("*");
-        
+
         if (contentData && contentData.length > 0) {
           const obj = {};
           contentData.forEach((item) => (obj[item.key] = item.value));
@@ -588,7 +674,7 @@ export default function LandingPage() {
     }
   };
 
-  // Gửi thông tin khách hàng trực tiếp lên Supabase
+  // Gửi thông tin khách hàng trực tiếp lên Supabase (Tự động ghép link ảnh ẩn từ bộ nhớ)
   const submitContact = async (e) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.phone) {
@@ -597,19 +683,22 @@ export default function LandingPage() {
     }
     setContactLoading(true);
     try {
-      const { error } = await supabase
-        .from("contacts")
-        .insert([
-          {
-            name: contactForm.name,
-            phone: contactForm.phone,
-            email: contactForm.email,
-            service: contactForm.service,
-            area: contactForm.area,
-            address: contactForm.address,
-            note: contactForm.note,
-          }
-        ]);
+      // GHÉP LINK ẨN: Chỉ tự động đính kèm link khi gửi về database Supabase
+      const finalNote =
+        contactForm.note +
+        (selectedSimulatorUrl ? " " + selectedSimulatorUrl : "");
+
+      const { error } = await supabase.from("contacts").insert([
+        {
+          name: contactForm.name,
+          phone: contactForm.phone,
+          email: contactForm.email,
+          service: contactForm.service,
+          area: contactForm.area,
+          address: contactForm.address,
+          note: finalNote,
+        },
+      ]);
 
       if (error) throw error;
 
@@ -623,6 +712,7 @@ export default function LandingPage() {
         address: "",
         note: "",
       });
+      setSelectedSimulatorUrl(""); // Xóa link ảnh ẩn sau khi gửi thành công
       setTimeout(() => setContactSuccess(false), 5000);
     } catch (err) {
       console.error("Lỗi lưu liên hệ khách hàng:", err);
@@ -636,7 +726,9 @@ export default function LandingPage() {
   const submitRecruitment = async (e) => {
     e.preventDefault();
     if (!recruitForm.name || !recruitForm.phone || !recruitForm.position) {
-      alert("Vui lòng nhập đầy đủ Họ tên, Số điện thoại và Vị trí mong muốn ứng tuyển!");
+      alert(
+        "Vui lòng nhập đầy đủ Họ tên, Số điện thoại và Vị trí mong muốn ứng tuyển!"
+      );
       return;
     }
     try {
@@ -646,10 +738,12 @@ export default function LandingPage() {
           phone: recruitForm.phone,
           position: recruitForm.position,
           experience: recruitForm.experience,
-        }
+        },
       ]);
       if (error) throw error;
-      alert("Nộp hồ sơ ứng tuyển thành công! ThạchPro sẽ liên hệ trao đổi trực tiếp với bạn sớm nhất.");
+      alert(
+        "Nộp hồ sơ ứng tuyển thành công! ThạchPro sẽ liên hệ trao đổi trực tiếp với bạn sớm nhất."
+      );
       setShowRecruitModal(false);
       setRecruitForm({ name: "", phone: "", position: "", experience: "" });
     } catch {
@@ -660,10 +754,13 @@ export default function LandingPage() {
   // SỬA LỖI CHÍ MẠNG (AN TOÀN TUYỆT ĐỐI): Bộ quét lọc tìm kiếm có kiểm tra điều kiện trống tránh sập trang (Vàng đen thui)
   const searchedGallery = filteredItems.filter((item) => {
     const titleStr = item.title ? item.title.toLowerCase() : "";
-    const locStr = item.location ? item.location.toLowerCase() : "";
+    const locStr = item.location && item.location.toLowerCase();
     const searchKeyword = gallerySearch.toLowerCase();
-    
-    return titleStr.includes(searchKeyword) || locStr.includes(searchKeyword);
+
+    return (
+      titleStr.includes(searchKeyword) ||
+      (locStr && locStr.includes(searchKeyword))
+    );
   });
   const totalGalleryPages = Math.ceil(searchedGallery.length / GALLERY_LIMIT);
   const currentGalleryItems = searchedGallery.slice(
@@ -677,9 +774,15 @@ export default function LandingPage() {
     const tagStr = mat.tags ? mat.tags.toLowerCase() : "";
     const searchKeyword = materialsSearch.toLowerCase();
 
-    return nameStr.includes(searchKeyword) || brandStr.includes(searchKeyword) || tagStr.includes(searchKeyword);
+    return (
+      nameStr.includes(searchKeyword) ||
+      brandStr.includes(searchKeyword) ||
+      tagStr.includes(searchKeyword)
+    );
   });
-  const totalMaterialsPages = Math.ceil(searchedMaterials.length / materialsLimit);
+  const totalMaterialsPages = Math.ceil(
+    searchedMaterials.length / materialsLimit
+  );
   const currentMaterials = searchedMaterials.slice(
     (materialsPage - 1) * materialsLimit,
     materialsPage * materialsLimit
@@ -691,7 +794,11 @@ export default function LandingPage() {
     const projStr = rev.project ? rev.project.toLowerCase() : "";
     const searchKeyword = reviewsSearch.toLowerCase();
 
-    return nameStr.includes(searchKeyword) || textStr.includes(searchKeyword) || projStr.includes(searchKeyword);
+    return (
+      nameStr.includes(searchKeyword) ||
+      textStr.includes(searchKeyword) ||
+      projStr.includes(searchKeyword)
+    );
   });
   const totalReviewsPages = Math.ceil(searchedReviews.length / REVIEWS_LIMIT);
   const currentReviews = searchedReviews.slice(
@@ -701,7 +808,9 @@ export default function LandingPage() {
 
   // HÀM LẤY DANH SÁCH ẢNH GIẢ LẬP ĐÃ TẢI LÊN HOẶC LẤY ẢNH MẪU MẶC ĐỊNH SANG TRỌNG
   const getActiveSimulatorPhotos = () => {
-    const matchedRoom = simulatorItems.find(item => item.room_name === configRoom);
+    const matchedRoom = simulatorItems.find(
+      (item) => item.room_name === configRoom
+    );
     if (matchedRoom && matchedRoom.image) {
       const urls = matchedRoom.image.split("|").filter(Boolean);
       if (urls.length > 0) return urls;
@@ -712,54 +821,73 @@ export default function LandingPage() {
       "🛋️ Phòng Khách": [
         "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1618219908412-a29a1bb7b86e?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80",
       ],
       "🛏️ Phòng Ngủ": [
         "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80",
       ],
       "🍳 Phòng Ăn & Bếp": [
-        "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=80",
       ],
       "🛀 Phòng Tắm": [
-        "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=1200&q=80",
       ],
       "🏢 Văn Phòng": [
         "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80"
-      ]
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+      ],
     };
 
-    return defaultMap[configRoom] || ["https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80"];
+    return (
+      defaultMap[configRoom] || [
+        "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80",
+      ]
+    );
   };
 
   const activePhotosList = getActiveSimulatorPhotos();
-  const activePhotoUrl = activePhotosList[configPhotoIdx % activePhotosList.length] || activePhotosList[0];
+  const activePhotoUrl =
+    activePhotosList[configPhotoIdx % activePhotosList.length] ||
+    activePhotosList[0];
 
   // Hàm chuyển ảnh thủ công sang trái/phải ở phần Giả lập 3D
   const handlePrevConfigPhoto = () => {
-    setConfigPhotoIdx((prev) => (prev === 0 ? activePhotosList.length - 1 : prev - 1));
+    setConfigPhotoIdx((prev) =>
+      prev === 0 ? activePhotosList.length - 1 : prev - 1
+    );
   };
 
   const handleNextConfigPhoto = () => {
-    setConfigPhotoIdx((prev) => (prev >= activePhotosList.length - 1 ? 0 : prev + 1));
+    setConfigPhotoIdx((prev) =>
+      prev >= activePhotosList.length - 1 ? 0 : prev + 1
+    );
   };
 
-  // Tự động ghi mã số ảnh cụ thể và link ảnh thực tế để truyền về Admin khi nhấn nút
+  // NÂNG CẤP BẢO MẬT: Chỉ hiển thị dòng text mẫu sạch trên hộp văn bản, giấu kín link ảnh Supabase trong bộ nhớ ẩn
   const handleConfiguratorSubmit = () => {
     const currentPhotoNum = configPhotoIdx + 1;
     const currentPhotoUrlString = activePhotoUrl || "Không có link";
 
-    const text = "Tôi muốn đăng ký nhận tư vấn và khảo sát thi công trần thạch cao thực tế theo Mẫu 3D: [" + configRoom + " - Ảnh số " + currentPhotoNum + "]. \n👉 Link ảnh mẫu cụ thể khách chọn: " + currentPhotoUrlString;
-    
+    const text =
+      "Tôi muốn đăng ký nhận tư vấn và khảo sát thi công trần thạch cao thực tế theo Mẫu 3D: [" +
+      configRoom +
+      " - Ảnh số " +
+      currentPhotoNum +
+      "].";
+
+    // Ghi nhận vào state form liên hệ
     setContactForm({ ...contactForm, note: text, service: "Tư Vấn Trọn Gói" });
 
+    // Ghi nhận link ảnh Supabase vào bộ nhớ ẩn riêng biệt
+    setSelectedSimulatorUrl(currentPhotoUrlString);
+
+    // Cuộn mượt mà về vùng nhận form liên hệ (#contact)
     const contactSection = document.getElementById("contact");
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: "smooth" });
     }
   };
-
 
   return (
     <>
@@ -773,47 +901,96 @@ export default function LandingPage() {
       <nav id="nav" className={isScrolled ? "scrolled" : ""}>
         <a href="#" className="logo-wrap">
           {content.logo_image ? (
-            <img src={content.logo_image} alt="Logo" style={{ height: "40px", width: "40px", objectFit: "cover", borderRadius: "6px" }} />
+            <img
+              src={content.logo_image}
+              alt="Logo"
+              style={{
+                height: "40px",
+                width: "40px",
+                objectFit: "cover",
+                borderRadius: "6px",
+              }}
+            />
           ) : (
             <div className="logo-icon">🏠</div>
           )}
           <span className="logo-text">
-            {renderLogoText(content.brand_name)}<span>.</span>
+            {renderLogoText(content.brand_name)}
+            <span>.</span>
           </span>
         </a>
         <ul className="nav-center">
           <li>
-            <a href="#services" className={activeSection === "services" ? "active" : ""}>Dịch Vụ</a>
+            <a
+              href="#services"
+              className={activeSection === "services" ? "active" : ""}
+            >
+              {"Dịch Vụ"}
+            </a>
           </li>
           <li>
-            <a href="#gallery" className={activeSection === "gallery" ? "active" : ""}>Công Trình</a>
+            <a
+              href="#gallery"
+              className={activeSection === "gallery" ? "active" : ""}
+            >
+              {"Công Trình"}
+            </a>
           </li>
           <li>
-            <a href="#calc" className={activeSection === "calc" ? "active" : ""}>Báo Giá</a>
+            <a
+              href="#calc"
+              className={activeSection === "calc" ? "active" : ""}
+            >
+              {"Báo Giá"}
+            </a>
           </li>
           <li>
-            <a href="#materials" className={activeSection === "materials" ? "active" : ""}>Vật Liệu</a>
+            <a
+              href="#materials"
+              className={activeSection === "materials" ? "active" : ""}
+            >
+              {"Vật Liệu"}
+            </a>
           </li>
           <li>
-            <a href="#reviews" className={activeSection === "reviews" ? "active" : ""}>Đánh Giá</a>
+            <a
+              href="#reviews"
+              className={activeSection === "reviews" ? "active" : ""}
+            >
+              {"Đánh Giá"}
+            </a>
           </li>
           <li>
-            <a href="#contact" className={activeSection === "contact" ? "active" : ""}>Liên Hệ</a>
+            <a
+              href="#contact"
+              className={activeSection === "contact" ? "active" : ""}
+            >
+              {"Liên Hệ"}
+            </a>
           </li>
           {/* Nút Tuyển Dụng Thợ */}
           <li>
-            <a href="#recruit" onClick={(e) => { e.preventDefault(); setShowRecruitModal(true); }} style={{ color: "var(--accent)", fontWeight: 700 }}>Tuyển Thợ 🇻🇳</a>
+            <a
+              href="#recruit"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowRecruitModal(true);
+              }}
+              style={{ color: "var(--accent)", fontWeight: 700 }}
+            >
+              {"Tuyển Thợ 🇻🇳"}
+            </a>
           </li>
         </ul>
         <div className="nav-right">
           <a
-            href={`tel:${content.contact_phone || "0901234567"}`}
+            href={"tel:" + (content.contact_phone || "0901234567")}
             className="nav-phone"
           >
-            📞 {content.contact_phone || "0901 234 567"}
+            {"📞 " + (content.contact_phone || "0901 234 567")}
           </a>
           <a href="#contact" className="btn-nav">
-            Liên Hệ Ngay
+            {"Liên Hệ Ngay"}
           </a>
           <button
             className="mobile-menu-btn"
@@ -833,22 +1010,30 @@ export default function LandingPage() {
           ✕
         </button>
         <a href="#services" onClick={() => setMobileMenuOpen(false)}>
-          Dịch Vụ
+          {"Dịch Vụ"}
         </a>
         <a href="#gallery" onClick={() => setMobileMenuOpen(false)}>
-          Công Trình
+          {"Công Trình"}
         </a>
         <a href="#calc" onClick={() => setMobileMenuOpen(false)}>
-          Báo Giá
+          {"Báo Giá"}
         </a>
         <a href="#materials" onClick={() => setMobileMenuOpen(false)}>
-          Vật Liệu
+          {"Vật Liệu"}
         </a>
         <a href="#contact" onClick={() => setMobileMenuOpen(false)}>
-          Liên Hệ
+          {"Liên Hệ"}
         </a>
-        <a href="#recruit" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); setShowRecruitModal(true); }} style={{ color: "var(--accent)" }}>
-          Tuyển Thợ 🇻🇳
+        <a
+          href="#recruit"
+          onClick={(e) => {
+            e.preventDefault();
+            setMobileMenuOpen(false);
+            setShowRecruitModal(true);
+          }}
+          style={{ color: "var(--accent)" }}
+        >
+          {"Tuyển Thợ 🇻🇳"}
         </a>
       </div>
 
@@ -887,20 +1072,28 @@ export default function LandingPage() {
           <div className="hero-right">
             <div className="stat-box">
               <div className="stat-num">500+</div>
-              <div className="stat-lbl">{content.stat1_lbl || "Công trình hoàn thành"}</div>
+              <div className="stat-lbl">
+                {content.stat1_lbl || "Công trình hoàn thành"}
+              </div>
             </div>
             <div className="stat-box">
-              <div className="stat-num">{content.about_years || "15"}+</div>
-              <div className="stat-lbl">{content.stat2_lbl || "Năm kinh nghiệm"}</div>
+              <div className="stat-num">
+                {(content.about_years || "15") + "+"}
+              </div>
+              <div className="stat-lbl">
+                {content.stat2_lbl || "Năm kinh nghiệm"}
+              </div>
             </div>
             <div className="stat-box">
               <div className="stat-num">98%</div>
-              <div className="stat-lbl">{content.stat3_lbl || "Khách hàng hài lòng"}</div>
+              <div className="stat-lbl">
+                {content.stat3_lbl || "Khách hàng hài lòng"}
+              </div>
             </div>
           </div>
         </div>
         <div className="scroll-ind">
-          <span>Cuộn xuống</span>
+          <span>{"Cuộn xuống"}</span>
           <div className="scroll-line"></div>
         </div>
       </section>
@@ -934,18 +1127,19 @@ export default function LandingPage() {
       <section id="services">
         <div className="services-head">
           <div>
-            <div className="sec-eyebrow">Dịch Vụ</div>
+            <div className="sec-eyebrow">{"Dịch Vụ"}</div>
             <h2 className="sec-title">
-              Thi Công Toàn Diện
+              {"Thi Công Toàn Diện"}
               <br />
               <em style={{ fontStyle: "italic", color: "var(--accent)" }}>
-                Đúng Chất Lượng
+                {"Đúng Chất Lượng"}
               </em>
             </h2>
           </div>
           <p className="sec-desc">
-            Đội thợ lành nghề 10+ năm kinh nghiệm. Cam kết tiến độ, chất lượng
-            bề mặt mịn phẳng tiêu chuẩn, bảo hành dài hạn.
+            {
+              "Đội thợ lành nghề 10+ năm kinh nghiệm. Cam kết tiến độ, chất lượng bề mặt mịn phẳng tiêu chuẩn, bảo hành dài hạn."
+            }
           </p>
         </div>
         <div className="svc-grid">
@@ -1011,50 +1205,89 @@ export default function LandingPage() {
       {/* NÂNG CẤP ĐẶC BIỆT: TRÌNH GIẢ LẬP KHÔNG GIAN PHÒNG 3D PRO CHUẨN SANG TRỌNG */}
       <section id="configurator" style={{ background: "var(--c0)" }}>
         <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-          <div className="sec-eyebrow" style={{ justifyContent: "center" }}>Trải Nghiệm 3D</div>
-          <h2 className="sec-title">Phòng Thiết Kế Trần 3D Pro</h2>
+          <div className="sec-eyebrow" style={{ justifyContent: "center" }}>
+            {"Trải Nghiệm 3D"}
+          </div>
+          <h2 className="sec-title">{"Phòng Thiết Kế Trần 3D Pro"}</h2>
           <p className="sec-desc" style={{ margin: "0 auto" }}>
-            Tự tay cấu hình thử các kiểu trần thạch cao và hiệu ứng ánh sáng đèn LED thông minh trong không gian phòng khách mẫu.
+            {
+              "Tự tay cấu hình thử các kiểu trần thạch cao và hiệu ứng ánh sáng đèn LED thông minh trong không gian phòng khách mẫu."
+            }
           </p>
         </div>
 
         <div className="calc-wrap" style={{ alignItems: "center" }}>
           {/* Cột trái: Khung hiển thị không gian (Hỗ trợ lướt ảnh Trái/Phải thủ công) */}
-          <div className="config-viewport" onMouseEnter={() => setIsGalleryHovered(true)} onMouseLeave={() => setIsGalleryHovered(false)}>
-            <div className="hero-tag" style={{ position: "absolute", top: "1rem", left: "1rem", zIndex: 10, margin: 0, padding: "0.3rem 0.8rem", background: "rgba(10,11,13,0.8)" }}>
-              <span className="dot"></span> LIVE 3D RENDER
+          <div
+            className="config-viewport"
+            onMouseEnter={() => setIsGalleryHovered(true)}
+            onMouseLeave={() => setIsGalleryHovered(false)}
+          >
+            <div
+              className="hero-tag"
+              style={{
+                position: "absolute",
+                top: "1rem",
+                left: "1rem",
+                zIndex: 10,
+                margin: 0,
+                padding: "0.3rem 0.8rem",
+                background: "rgba(10,11,13,0.8)",
+              }}
+            >
+              <span className="dot"></span> {"LIVE 3D RENDER"}
             </div>
 
             {/* Ảnh mô phỏng phòng đang chọn */}
             <img
               src={activePhotoUrl}
               alt="Giả lập 3D"
-              style={{ width: "100%", height: "100%", objectFit: "cover", transition: "all 0.5s ease" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                transition: "all 0.5s ease",
+              }}
             />
 
-            {/* Nút bấm chuyển ảnh Trái/Phải thủ công khi Album có nhiều hơn 1 ảnh */}
+            {/* Nút bấm chuyển ảnh Trái/Phải thủ công dạng Kính Mờ (Glassmorphism) phát sáng cực đẹp */}
             {activePhotosList.length > 1 && (
               <>
                 <button
                   type="button"
                   onClick={handlePrevConfigPhoto}
-                  className="lightbox-prev"
-                  style={{ left: "1rem", width: "40px", height: "40px", fontSize: "1.1rem" }}
+                  className="config-arrow"
+                  style={{ left: "1rem" }}
                 >
                   {"<"}
                 </button>
                 <button
                   type="button"
                   onClick={handleNextConfigPhoto}
-                  className="lightbox-next"
-                  style={{ right: "1rem", width: "40px", height: "40px", fontSize: "1.1rem" }}
+                  className="config-arrow"
+                  style={{ right: "1rem" }}
                 >
                   {">"}
                 </button>
 
-                {/* Số chỉ số ảnh dưới góc */}
-                <div style={{ position: "absolute", bottom: "1rem", right: "1rem", background: "rgba(10,11,13,0.8)", padding: "0.3rem 0.8rem", borderRadius: "99px", fontSize: "0.75rem", fontWeight: "700", color: "var(--accent)" }}>
-                  {"Ảnh " + (configPhotoIdx + 1) + " / " + activePhotosList.length}
+                {/* Số chỉ số ảnh dưới hốc */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "1rem",
+                    right: "1rem",
+                    background: "rgba(10,11,13,0.8)",
+                    padding: "0.3rem 0.8rem",
+                    borderRadius: "99px",
+                    fontSize: "0.75rem",
+                    fontWeight: "700",
+                    color: "var(--accent)",
+                  }}
+                >
+                  {"Ảnh " +
+                    (configPhotoIdx + 1) +
+                    " / " +
+                    activePhotosList.length}
                 </div>
               </>
             )}
@@ -1062,11 +1295,15 @@ export default function LandingPage() {
 
           {/* Cột phải: Bộ bảng nút bấm điều khiển */}
           <div className="config-control-card">
-            <div className="calc-title-bar" style={{ marginBottom: "1.5rem" }}>Bảng Tùy Biến Trần & Đèn Pro</div>
-            
-            {/* LỰA CHỌN KHÔNG GIAN PHÒNG (Nâng cấp mở rộng 12 Không không gian dạng Dropdown) */}
+            <div className="calc-title-bar" style={{ marginBottom: "1.5rem" }}>
+              {"Bảng Tùy Biến Trần & Đèn Pro"}
+            </div>
+
+            {/* LỰA CHỌN KHÔNG GIAN PHÒNG */}
             <div style={{ marginBottom: "1.5rem" }}>
-              <label className="form-label" style={{ marginBottom: "0.8rem" }}>1. Chọn Không Gian Thiết Kế *</label>
+              <label className="form-label" style={{ marginBottom: "0.8rem" }}>
+                {"1. Chọn Không Gian Thiết Kế *"}
+              </label>
               <select
                 className="mf-select"
                 value={configRoom}
@@ -1074,27 +1311,60 @@ export default function LandingPage() {
                   setConfigRoom(e.target.value);
                   setConfigPhotoIdx(0); // Reset về ảnh đầu tiên khi chuyển phòng
                 }}
-                style={{ background: "var(--c2)", borderColor: "var(--line)", color: "var(--text)" }}
+                style={{
+                  background: "var(--c2)",
+                  borderColor: "var(--line)",
+                  color: "var(--text)",
+                }}
               >
-                <option value="🛋️ Phòng Khách">🛋️ Phòng Khách (Căn hộ / Biệt thự)</option>
-                <option value="🛏️ Phòng Ngủ">🛏️ Phòng Ngủ ấm cúng</option>
-                <option value="🍳 Phòng Ăn & Bếp">🍳 Phòng Ăn & Bếp gia đình</option>
-                <option value="🛀 Phòng Tắm">🛀 Phòng Tắm (Tấm chống ẩm cao cấp)</option>
-                <option value="🏢 Văn Phòng">🏢 Văn Phòng / Phòng làm việc</option>
-                <option value="🍽️ Nhà Hàng">🍽️ Nhà Hàng tiệc cưới / Ăn uống</option>
-                <option value="☕ Quán Cafe">☕ Quán Cafe thư giãn</option>
-                <option value="🏨 Sảnh Khách Sạn">🏨 Sảnh Khách Sạn quý phái</option>
-                <option value="🎤 Phòng Karaoke">🎤 Phòng Karaoke / Phòng thu cách âm</option>
-                <option value="🛥️ Tàu Du Lịch">🛥️ Du Thuyền / Tàu Du Lịch cao cấp</option>
-                <option value="🛍️ Showroom">🛍️ Showroom / Cửa Hàng trưng bày</option>
-                <option value="🏛️ Biệt Thự">🏛️ Biệt Thự / Villa lâu đài</option>
+                <option value="🛋️ Phòng Khách">
+                  {"🛋️ Phòng Khách (Căn hộ / Biệt thự)"}
+                </option>
+                <option value="🛏️ Phòng Ngủ">{"🛏️ Phòng Ngủ ấm cúng"}</option>
+                <option value="🍳 Phòng Ăn & Bếp">
+                  {"🍳 Phòng Ăn & Bếp gia đình"}
+                </option>
+                <option value="🛀 Phòng Tắm">
+                  {"🛀 Phòng Tắm (Tấm chống ẩm cao cấp)"}
+                </option>
+                <option value="🏢 Văn Phòng">
+                  {"🏢 Văn Phòng / Phòng làm việc"}
+                </option>
+                <option value="🍽️ Nhà Hàng">
+                  {"🍽️ Nhà Hàng tiệc cưới / Ăn uống"}
+                </option>
+                <option value="☕ Quán Cafe">{"☕ Quán Cafe thư giãn"}</option>
+                <option value="🏨 Sảnh Khách Sạn">
+                  {"🏨 Sảnh Khách Sạn quý phái"}
+                </option>
+                <option value="🎤 Phòng Karaoke">
+                  {"🎤 Phòng Karaoke / Phòng thu cách âm"}
+                </option>
+                <option value="🛥️ Tàu Du Lịch">
+                  {"🛥️ Du Thuyền / Tàu Du Lịch cao cấp"}
+                </option>
+                <option value="🛍️ Showroom">
+                  {"🛍️ Showroom / Cửa Hàng trưng bày"}
+                </option>
+                <option value="🏛️ Biệt Thự">
+                  {"🏛️ Biệt Thự / Villa lâu đài"}
+                </option>
               </select>
             </div>
 
             {/* Thông báo nếu chưa có ảnh tự cấu hình */}
-            {(!simulatorItems.some(item => item.room_name === configRoom)) && (
-              <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "1.5rem", lineHeight: "1.5" }}>
-                💡 Phòng này đang sử dụng ảnh phối cảnh 3D mẫu tiêu chuẩn. Bạn có thể tự tải ảnh thực tế lên phòng này ở trang quản trị Admin Panel.
+            {!simulatorItems.some((item) => item.room_name === configRoom) && (
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--muted)",
+                  marginBottom: "1.5rem",
+                  lineHeight: "1.5",
+                }}
+              >
+                {
+                  "💡 Phòng này đang sử dụng ảnh phối cảnh 3D mẫu tiêu chuẩn. Bạn có thể tự tải ảnh thực tế lên phòng này ở trang quản trị Admin Panel."
+                }
               </p>
             )}
 
@@ -1102,9 +1372,14 @@ export default function LandingPage() {
             <button
               onClick={handleConfiguratorSubmit}
               className="btn-primary"
-              style={{ width: "100%", textAlign: "center", cursor: "pointer", marginTop: "1rem" }}
+              style={{
+                width: "100%",
+                textAlign: "center",
+                cursor: "pointer",
+                marginTop: "1rem",
+              }}
             >
-              Tôi Muốn Thi Công Kiểu Này
+              {"Tôi Muốn Thi Công Kiểu Này"}
             </button>
           </div>
         </div>
@@ -1117,65 +1392,70 @@ export default function LandingPage() {
             <div className="about-ring-inner">
               <div className="arc-num">{content.about_years || "15"}</div>
               <div className="arc-lbl">
-                Năm
+                {"Năm"}
                 <br />
-                Kinh Nghiệm
+                {"Kinh Nghiệm"}
               </div>
             </div>
           </div>
           <div className="about-badges">
-            <div className="badge">Knauf Partner</div>
-            <div className="badge">ISO 9001</div>
-            <div className="badge">USG Authorized</div>
-            <div className="badge">Vĩnh Tường</div>
+            <div className="badge">{"Knauf Partner"}</div>
+            <div className="badge">{"ISO 9001"}</div>
+            <div className="badge">{"USG Authorized"}</div>
+            <div className="badge">{"Vĩnh Tường"}</div>
           </div>
         </div>
         <div className="about-text">
-          <div className="sec-eyebrow">Về Chúng Tôi</div>
+          <div className="sec-eyebrow">{"Về Chúng Tôi"}</div>
           <h2 className="sec-title">
             {content.about_title || "Hơn 15 Năm Xây Dựng Niềm Tin"}
           </h2>
           <p className="sec-desc">
-            {content.about_desc || "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM."}
+            {content.about_desc ||
+              "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM."}
           </p>
           <div className="feat-list">
             <div className="feat">
               <div className="feat-ico">🏆</div>
               <div>
-                <div className="feat-title">Đội Ngũ Thợ Chuyên Nghiệp</div>
+                <div className="feat-title">{"Đội Ngũ Thợ Chuyên Nghiệp"}</div>
                 <div className="feat-desc">
-                  30+ thợ lành nghề with 10+ năm kinh nghiệm. Được đào tạo bài
-                  bản theo tiêu chuẩn Knauf & USG.
+                  {
+                    "30+ thợ lành nghề with 10+ năm kinh nghiệm. Được đào tạo bài bản theo tiêu chuẩn Knauf & USG."
+                  }
                 </div>
               </div>
             </div>
             <div className="feat">
               <div className="feat-ico">📋</div>
               <div>
-                <div className="feat-title">Báo Giá Minh Bạch</div>
+                <div className="feat-title">{"Báo Giá Minh Bạch"}</div>
                 <div className="feat-desc">
-                  Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng
-                   mục, vật tư rõ ràng ngay từ đầu.
+                  {
+                    "Không phát sinh chi phí ngoài hợp đồng. Báo giá chi tiết từng mục, vật tư rõ ràng ngay từ đầu."
+                  }
                 </div>
               </div>
             </div>
             <div className="feat">
               <div className="feat-ico">⚡</div>
               <div>
-                <div className="feat-title">Tiến Độ Đúng Cam Kết</div>
+                <div className="feat-title">{"Tiến Độ Đúng Cam Kết"}</div>
                 <div className="feat-desc">
-                  Đảm bảo hoàn thành đúng hạn. Làm sạch công trình hàng ngày,
-                  không gây ảnh hưởng đến sinh hoạt.
+                  {
+                    "Đảm bảo hoàn thành đúng hạn. Làm sạch công trình hàng ngày, không gây ảnh hưởng đến sinh hoạt."
+                  }
                 </div>
               </div>
             </div>
             <div className="feat">
               <div className="feat-ico">🛡️</div>
               <div>
-                <div className="feat-title">Bảo Hành 24 Tháng</div>
+                <div className="feat-title">{"Bảo Hành 24 Tháng"}</div>
                 <div className="feat-desc">
-                  Cam kết bảo hành toàn bộ hạng mục 24 tháng. Hỗ trợ bảo trì
-                  miễn phí sau thời gian bảo hành.
+                  {
+                    "Cam kết bảo hành toàn bộ hạng mục 24 tháng. Hỗ trợ bảo trì miễn phí sau thời gian bảo hành."
+                  }
                 </div>
               </div>
             </div>
@@ -1185,11 +1465,21 @@ export default function LandingPage() {
 
       {/* GALLERY CÔNG TRÌNH */}
       <section id="gallery">
-        <div className="sec-eyebrow">Dự Án Tiêu Biểu</div>
-        <h2 className="sec-title">Công Trình Đã Thực Hiện</h2>
-        
+        <div className="sec-eyebrow">{"Dự Án Tiêu Biểu"}</div>
+        <h2 className="sec-title">{"Công Trình Đã Thực Hiện"}</h2>
+
         {/* Nút lọc và Ô tìm kiếm công trình */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginTop: "1.8rem", marginBottom: "2rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "1rem",
+            marginTop: "1.8rem",
+            marginBottom: "2rem",
+          }}
+        >
           <div className="gallery-filters" style={{ margin: 0 }}>
             {[
               "all",
@@ -1201,19 +1491,24 @@ export default function LandingPage() {
             ].map((cat) => (
               <button
                 key={cat}
-                className={`filter-btn ${activeCategory === cat ? "active" : ""}`}
+                className={`filter-btn ${
+                  activeCategory === cat ? "active" : ""
+                }`}
                 onClick={() => handleFilter(cat)}
               >
                 {cat === "all" ? "Tất Cả" : cat}
               </button>
             ))}
           </div>
-          
+
           <input
             type="text"
             placeholder="🔍 Tìm công trình (tiêu đề, địa điểm...)"
             value={gallerySearch}
-            onChange={(e) => { setGallerySearch(e.target.value); setGalleryPage(1); }}
+            onChange={(e) => {
+              setGallerySearch(e.target.value);
+              setGalleryPage(1);
+            }}
             className="cf-input"
             style={{ maxWidth: "350px", background: "var(--c2)", margin: 0 }}
           />
@@ -1238,7 +1533,7 @@ export default function LandingPage() {
               ⟳
             </div>
             <br />
-            Đang tải dữ liệu dự án...
+            {"Đang tải dữ liệu dự án..."}
           </div>
         ) : searchedGallery.length === 0 ? (
           <div
@@ -1248,11 +1543,11 @@ export default function LandingPage() {
               color: "var(--muted)",
             }}
           >
-            Không tìm thấy công trình phù hợp.
+            {"Không tìm thấy công trình phù hợp."}
           </div>
         ) : (
-          <div 
-            onMouseEnter={() => setIsGalleryHovered(true)} 
+          <div
+            onMouseEnter={() => setIsGalleryHovered(true)}
             onMouseLeave={() => setIsGalleryHovered(false)}
           >
             <div className="gallery-grid" style={{ display: "grid" }}>
@@ -1393,46 +1688,51 @@ export default function LandingPage() {
 
       {/* CALCULATOR */}
       <section id="calc">
-        <div className="sec-eyebrow">Công Cụ</div>
+        <div className="sec-eyebrow">{"Công Cụ"}</div>
         <h2 className="sec-title">
-          Tính Chi Phí{" "}
+          {"Tính Chi Phí "}
           <em style={{ color: "var(--accent)", fontStyle: "italic" }}>
-            Ngay & Luôn
+            {"Ngay & Luôn"}
           </em>
         </h2>
         <p className="sec-desc" style={{ marginBottom: "4rem" }}>
-          Nhập thông tin để nhận ước tính chi phí nhanh. Báo giá chính xác sau
-          khi khảo sát thực tế miễn phí.
+          {
+            "Nhập thông tin để nhận ước tính chi phí nhanh. Báo giá chính xác sau khi khảo sát thực tế miễn phí."
+          }
         </p>
         <div className="calc-wrap">
           <div className="calc-form">
-            <div className="calc-title-bar">Thông Tin Công Trình</div>
+            <div className="calc-title-bar">{"Thông Tin Công Trình"}</div>
             <div className="form-row">
-              <label className="form-label">Loại Dịch Vụ</label>
+              <label className="form-label">{"Loại Dịch Vụ"}</label>
               <select
                 className="form-select"
                 id="svcType"
                 onChange={(e) => handleCalc("svc", e.target.value)}
               >
                 <option value="95000">
-                  Trần Thạch Cao Phẳng (từ 95.000đ/m²)
+                  {"Trần Thạch Cao Phẳng (từ 95.000đ/m²)"}
                 </option>
-                <option value="145000">Trần Giật Cấp (từ 145.000đ/m²)</option>
+                <option value="145000">
+                  {"Trần Giật Cấp (từ 145.000đ/m²)"}
+                </option>
                 <option value="180000">
-                  Vách Ngăn Thạch Cao (từ 180.000đ/m²)
+                  {"Vách Ngăn Thạch Cao (từ 180.000đ/m²)"}
                 </option>
                 <option value="120000">
-                  Phào Chỉ Trang Trí (từ 120.000đ/md)
+                  {"Phào Chỉ Trang Trí (từ 120.000đ/md)"}
                 </option>
-                <option value="55000">Bả Bột & Sơn Nước (từ 55.000đ/m²)</option>
-                <option value="0">Trọn Gói Nhiều Hạng Mục</option>
+                <option value="55000">
+                  {"Bả Bột & Sơn Nước (từ 55.000đ/m²)"}
+                </option>
+                <option value="0">{"Trọn Gói Nhiều Hạng Mục"}</option>
               </select>
             </div>
             <div className="form-row">
-              <label className="form-label">Diện Tích (m²)</label>
+              <label className="form-label">{"Diện Tích (m²)"}</label>
               <div className="range-wrap">
                 <div className="range-val">
-                  <span>Diện tích</span>
+                  <span>{"Diện tích"}</span>
                   <span>{calcParams.area} m²</span>
                 </div>
                 <input
@@ -1446,49 +1746,49 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="form-row">
-              <label className="form-label">Chất Lượng Vật Liệu</label>
+              <label className="form-label">{"Chất Lượng Vật Liệu"}</label>
               <select
                 className="form-select"
                 id="matQ"
                 onChange={(e) => handleCalc("mat", e.target.value)}
               >
-                <option value="1.0">Tiêu Chuẩn</option>
-                <option value="1.3">Cao Cấp (Knauf, USG)</option>
-                <option value="1.6">Premium (Chống Ẩm / Chống Cháy)</option>
+                <option value="1.0">{"Tiêu Chuẩn"}</option>
+                <option value="1.3">{"Cao Cấp (Knauf, USG)"}</option>
+                <option value="1.6">{"Premium (Chống Ẩm / Chống Cháy)"}</option>
               </select>
             </div>
             <div className="form-row">
-              <label className="form-label">Loại Công Trình</label>
+              <label className="form-label">{"Loại Công Trình"}</label>
               <select
                 className="form-select"
                 id="buildT"
                 onChange={(e) => handleCalc("build", e.target.value)}
               >
-                <option value="1.0">Căn Hộ / Nhà Phố</option>
-                <option value="1.1">Văn Phòng / Thương Mại</option>
-                <option value="1.2">Biệt Thự / Cao Cấp</option>
-                <option value="0.95">Nhà Xưởng / Kho Bãi</option>
+                <option value="1.0">{"Căn Hộ / Nhà Phố"}</option>
+                <option value="1.1">{"Văn Phòng / Thương Mại"}</option>
+                <option value="1.2">{"Biệt Thự / Cao Cấp"}</option>
+                <option value="0.95">{"Nhà Xưởng / Kho Bãi"}</option>
               </select>
             </div>
             <button
               className="calc-btn"
               onClick={() => handleCalc("area", calcParams.area)}
             >
-              🔢 Tính Chi Phí Ngay
+              {"🔢 Tính Chi Phí Ngay"}
             </button>
           </div>
           <div className="calc-result">
             <div className="result-box active">
-              <div className="result-label">Ước Tính Chi Phí Nhân Công</div>
+              <div className="result-label">{"Ước Tính Chi Phí Nhân Công"}</div>
               <div className="result-price">{calcResult}</div>
-              <div className="result-unit">Chưa bao gồm VAT & vật liệu</div>
+              <div className="result-unit">{"Chưa bao gồm VAT & vật liệu"}</div>
               <div className="result-bd">
                 <div className="rb-item">
-                  <span className="rb-label">Diện tích</span>
+                  <span className="rb-label">{"Diện tích"}</span>
                   <span className="rb-val">{calcParams.area} m²</span>
                 </div>
                 <div className="rb-item">
-                  <span className="rb-label">Đơn giá nhân công</span>
+                  <span className="rb-label">{"Đơn giá nhân công"}</span>
                   <span className="rb-val">
                     {calcParams.svc === 0
                       ? "Liên hệ"
@@ -1496,25 +1796,27 @@ export default function LandingPage() {
                   </span>
                 </div>
                 <div className="rb-item">
-                  <span className="rb-label">Hệ số vật liệu</span>
-                  <span className="rb-val">× {calcParams.mat}</span>
+                  <span className="rb-label">{"Hệ số vật liệu"}</span>
+                  <span className="rb-val">{"× " + calcParams.mat}</span>
                 </div>
                 <div className="rb-item">
-                  <span className="rb-label">Hệ số công trình</span>
-                  <span className="rb-val">× {calcParams.build}</span>
+                  <span className="rb-label">{"Hệ số công trình"}</span>
+                  <span className="rb-val">{"× " + calcParams.build}</span>
                 </div>
                 <div className="rb-div"></div>
                 <div className="rb-item rb-total">
-                  <span className="rb-label">Tổng ước tính</span>
+                  <span className="rb-label">{"Tổng ước tính"}</span>
                   <span className="rb-val">{calcResult}</span>
                 </div>
               </div>
             </div>
             <div className="calc-note">
-              <strong>⚠️ Lưu ý:</strong> Đây là ước tính tham khảo. Chi phí thực
-              tế phụ thuộc vào hiện trạng công trình và độ phức tạp thiết kế.{" "}
+              <strong>{"⚠️ Lưu ý:"}</strong>{" "}
+              {
+                "Đây là ước tính tham khảo. Chi phí thực tế phụ thuộc vào hiện trạng công trình và độ phức tạp thiết kế."
+              }{" "}
               <strong>
-                Liên hệ để được khảo sát và báo giá chính xác miễn phí.
+                {"Liên hệ để được khảo sát và báo giá chính xác miễn phí."}
               </strong>
             </div>
           </div>
@@ -1523,28 +1825,43 @@ export default function LandingPage() {
 
       {/* MATERIALS */}
       <section id="materials">
-        <div className="sec-eyebrow">Vật Liệu</div>
-        <h2 className="sec-title">Nguồn Hàng Chính Hãng</h2>
-        
+        <div className="sec-eyebrow">{"Vật Liệu"}</div>
+        <h2 className="sec-title">{"Nguồn Hàng Chính Hãng"}</h2>
+
         {/* Ô tìm kiếm vật liệu */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "2rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "2rem",
+          }}
+        >
           <input
             type="text"
             placeholder="🔍 Tìm vật liệu (tên, hãng, nhãn...)"
             value={materialsSearch}
-            onChange={(e) => { setMaterialsSearch(e.target.value); setMaterialsPage(1); }}
+            onChange={(e) => {
+              setMaterialsSearch(e.target.value);
+              setMaterialsPage(1);
+            }}
             className="cf-input"
             style={{ maxWidth: "350px", background: "var(--c2)", margin: 0 }}
           />
         </div>
 
         {searchedMaterials.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "4rem", color: "var(--muted)" }}>
-            Không tìm thấy vật liệu phù hợp.
+          <div
+            style={{
+              textAlign: "center",
+              padding: "4rem",
+              color: "var(--muted)",
+            }}
+          >
+            {"Không tìm thấy vật liệu phù hợp."}
           </div>
         ) : (
-          <div 
-            onMouseEnter={() => setIsMaterialsHovered(true)} 
+          <div
+            onMouseEnter={() => setIsMaterialsHovered(true)}
             onMouseLeave={() => setIsMaterialsHovered(false)}
           >
             <div className="mat-grid" style={{ display: "grid" }}>
@@ -1579,9 +1896,9 @@ export default function LandingPage() {
       <section id="process">
         <div style={{ textAlign: "center" }}>
           <div className="sec-eyebrow" style={{ justifyContent: "center" }}>
-            Quy Trình
+            {"Quy Trình"}
           </div>
-          <h2 className="sec-title">5 Bước Đến Công Trình Hoàn Hảo</h2>
+          <h2 className="sec-title">{"5 Bước Đến Công Trình Hoàn Hảo"}</h2>
         </div>
         <div className="process-grid">
           {[
@@ -1630,37 +1947,52 @@ export default function LandingPage() {
       <section id="reviews">
         <div className="reviews-head">
           <div>
-            <div className="sec-eyebrow">Khách Hàng Nói Gì</div>
-            <h2 className="sec-title">Đánh Giá Thực Tế</h2>
+            <div className="sec-eyebrow">{"Khách Hàng Nói Gì"}</div>
+            <h2 className="sec-title">{"Đánh Giá Thực Tế"}</h2>
           </div>
           <div className="rating-big">
-            <div className="rating-num">4.9</div>
+            <div className="rating-num">{"4.9"}</div>
             <div className="r-stars">
-              <div className="stars">★★★★★</div>
-              <div className="rating-sub">Dựa trên 200+ đánh giá</div>
+              <div className="stars">{"★★★★★"}</div>
+              <div className="rating-sub">{"Dựa trên 200+ đánh giá"}</div>
             </div>
           </div>
         </div>
 
         {/* Ô tìm kiếm đánh giá */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "2rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "2rem",
+          }}
+        >
           <input
             type="text"
             placeholder="🔍 Tìm đánh giá (tên, dự án, nội dung...)"
             value={reviewsSearch}
-            onChange={(e) => { setReviewsSearch(e.target.value); setReviewsPage(1); }}
+            onChange={(e) => {
+              setReviewsSearch(e.target.value);
+              setReviewsPage(1);
+            }}
             className="cf-input"
             style={{ maxWidth: "350px", background: "var(--c2)", margin: 0 }}
           />
         </div>
 
         {searchedReviews.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "4rem", color: "var(--muted)" }}>
-            Không tìm thấy đánh giá phù hợp.
+          <div
+            style={{
+              textAlign: "center",
+              padding: "4rem",
+              color: "var(--muted)",
+            }}
+          >
+            {"Không tìm thấy đánh giá phù hợp."}
           </div>
         ) : (
-          <div 
-            onMouseEnter={() => setIsReviewsHovered(true)} 
+          <div
+            onMouseEnter={() => setIsReviewsHovered(true)}
             onMouseLeave={() => setIsReviewsHovered(false)}
           >
             <div className="reviews-grid" style={{ display: "grid" }}>
@@ -1672,11 +2004,29 @@ export default function LandingPage() {
                   </div>
                   <p className="review-text">{item.text}</p>
                   <div className="review-author">
-                    <div className="review-av" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div
+                      className="review-av"
+                      style={{
+                        overflow: "hidden",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {item.avatar ? (
-                        <img src={item.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img
+                          src={item.avatar}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : item.name ? (
+                        item.name.charAt(0).toUpperCase()
                       ) : (
-                        item.name ? item.name.charAt(0).toUpperCase() : "T"
+                        "T"
                       )}
                     </div>
                     <div>
@@ -1704,30 +2054,28 @@ export default function LandingPage() {
           <div className="why-visual">
             <div className="why-card-main">
               <div className="why-grid-bg"></div>
-              <div className="why-tag">Cam kết chất lượng</div>
+              <div className="why-tag">{"Cam kết chất lượng"}</div>
               <div className="why-big">
-                Tại Sao
+                {"Tại Sao "}
                 <br />
-                Chọn
+                {"Chọn "}
                 <br />
                 {content.brand_name || "ThạchPro"}?
               </div>
             </div>
             <div className="why-float">
-              <div className="why-float-num">500+</div>
+              <div className="why-float-num">{"500+"}</div>
               <div className="why-float-lbl">
-                Công Trình
+                {"Công Trình "}
                 <br />
-                Hoàn Thành
+                {"Hoàn Thành"}
               </div>
             </div>
           </div>
           <div>
-            <div className="sec-eyebrow">Điểm Khác Biệt</div>
+            <div className="sec-eyebrow">{"Điểm Khác Biệt"}</div>
             <h2 className="sec-title">
-              Chúng Tôi Cam Kết
-              <br />
-              Điều Này
+              {content.about_title || "Chúng Tôi Cam Kết Điều Này"}
             </h2>
             <div className="why-list">
               {[
@@ -1782,7 +2130,7 @@ export default function LandingPage() {
           </div>
           <div className="cta-actions">
             <a
-              href={`tel:${content.contact_phone || "0901234567"}`}
+              href={"tel:" + (content.contact_phone || "0901234567")}
               className="btn-cta-dark"
             >
               {content.cta_btn || "📞 Gọi Ngay: 0901 234 567"}
@@ -1790,91 +2138,90 @@ export default function LandingPage() {
             <div className="cta-phone-big">
               {content.contact_phone || "0901 234 567"}
             </div>
-            <div className="cta-time">{content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}</div>
+            <div className="cta-time">{"Thứ 2 – Chủ Nhật · 7:00 – 18:00"}</div>
           </div>
         </div>
       </section>
 
       {/* CONTACT & MAP */}
       <section id="contact">
-        <div className="sec-eyebrow">Liên Hệ</div>
+        <div className="sec-eyebrow">{"Liên Hệ"}</div>
         <h2 className="sec-title">
-          Đặt Lịch Khảo Sát
-          <br />
+          {"Đặt Lịch Khảo Sát "}
           <em style={{ color: "var(--accent)", fontStyle: "italic" }}>
-            Miễn Phí
+            {"Miễn Phí"}
           </em>
         </h2>
         <p className="sec-desc" style={{ marginBottom: "4rem" }}>
-          Điền form bên dưới — đội kỹ thuật sẽ liên hệ lại trong vòng{" "}
-          <strong style={{ color: "var(--accent)" }}>30 phút</strong> để sắp xếp
-          lịch khảo sát.
+          {
+            "Điền form bên dưới — đội kỹ thuật sẽ liên hệ lại trong vòng 30 phút để sắp xếp lịch khảo sát."
+          }
         </p>
         <div className="contact-wrap">
           <div>
             <div className="ci-item">
               <div className="ci-icon">📞</div>
               <div>
-                <div className="ci-label">Hotline</div>
+                <div className="ci-label">{"Hotline"}</div>
                 <div className="ci-val">
                   {content.contact_phone || "0901 234 567"}
                 </div>
-                <div className="ci-sub">
-                  {content.contact_hours || "Hotline 7:00–18:00"}
-                </div>
+                <div className="ci-sub">{"Hotline 7:00–18:00"}</div>
               </div>
             </div>
             <div className="ci-item">
               <div className="ci-icon">💬</div>
               <div>
-                <div className="ci-label">Zalo</div>
+                <div className="ci-label">{"Zalo"}</div>
                 <div className="ci-val">
                   {content.contact_zalo || "0901 234 567"}
                 </div>
                 <div className="ci-sub">
-                  Nhắn tin nhận báo giá nhanh trong ngày
+                  {"Nhắn tin nhận báo giá nhanh trong ngày"}
                 </div>
               </div>
             </div>
             <div className="ci-item">
               <div className="ci-icon">📧</div>
               <div>
-                <div className="ci-label">Email</div>
+                <div className="ci-label">{"Email"}</div>
                 <div className="ci-val">
                   {content.contact_email || "thachpro@gmail.com"}
                 </div>
-                <div className="ci-sub">Phản hồi trong 2 giờ làm việc</div>
+                <div className="ci-sub">{"Phản hồi trong 2 giờ làm việc"}</div>
               </div>
             </div>
             <div className="ci-item">
               <div className="ci-icon">📍</div>
               <div>
-                <div className="ci-label">Showroom & Văn Phòng</div>
+                <div className="ci-label">{"Showroom & Văn Phòng"}</div>
                 <div className="ci-val">
                   {content.contact_address ||
                     "123 Nguyễn Văn Linh, Quận 7, TP.HCM"}
                 </div>
-                <div className="ci-sub">TP. Hồ Chí Minh · Gần cầu Kênh Tẻ</div>
+                <div className="ci-sub">
+                  {"TP. Hồ Chí Minh · Gần cầu Kênh Tẻ"}
+                </div>
               </div>
             </div>
             <div className="ci-item">
               <div className="ci-icon">🚚</div>
               <div>
-                <div className="ci-label">Khu Vực Phục Vụ</div>
-                <div className="ci-val">TP.HCM · Bình Dương · Long An</div>
+                <div className="ci-label">{"Khu Vực Phục Vụ"}</div>
+                <div className="ci-val">{"TP.HCM · Bình Dương · Long An"}</div>
                 <div className="ci-sub">
-                  Khảo sát và giao hàng tận nơi miễn phí
+                  {"Khảo sát và giao hàng tận nơi miễn phí"}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="contact-form-box">
-            <div className="cf-title">Gửi Yêu Cầu Báo Giá</div>
+            <div className="cf-title">{"Gửi Yêu Cầu Báo Giá"}</div>
             <form onSubmit={submitContact}>
               <div className="cf-row">
                 <div className="cf-field">
-                  <label className="cf-label">Họ & Tên *</label>
+                  <label className="cf-label">{"Họ & Tên *"}</label>
                   <input
                     className="cf-input"
                     type="text"
@@ -1887,7 +2234,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="cf-field">
-                  <label className="cf-label">Số Điện Thoại *</label>
+                  <label className="cf-label">{"Số Điện Thoại *"}</label>
                   <input
                     className="cf-input"
                     type="tel"
@@ -1902,7 +2249,7 @@ export default function LandingPage() {
               </div>
               <div className="cf-row">
                 <div className="cf-field">
-                  <label className="cf-label">Email</label>
+                  <label className="cf-label">{"Email"}</label>
                   <input
                     className="cf-input"
                     type="email"
@@ -1914,7 +2261,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="cf-field">
-                  <label className="cf-label">Dịch Vụ Quan Tâm</label>
+                  <label className="cf-label">{"Dịch Vụ Quan Tâm"}</label>
                   <select
                     className="cf-select"
                     value={contactForm.service}
@@ -1925,20 +2272,20 @@ export default function LandingPage() {
                       })
                     }
                   >
-                    <option value="">-- Chọn dịch vụ --</option>
-                    <option>Trần Thạch Cao Phẳng</option>
-                    <option>Trần Giật Cấp</option>
-                    <option>Vách Ngăn Thạch Cao</option>
-                    <option>Phào Chỉ Trang Trí</option>
-                    <option>Bả Bột & Sơn Nước</option>
-                    <option>Mua Vật Liệu Sỉ/Lẻ</option>
-                    <option>Tư Vấn Trọn Gói</option>
+                    <option value="">{"-- Chọn dịch vụ --"}</option>
+                    <option>{"Trần Thạch Cao Phẳng"}</option>
+                    <option>{"Trần Giật Cấp"}</option>
+                    <option>{"Vách Ngăn Thạch Cao"}</option>
+                    <option>{"Phào Chỉ Trang Trí"}</option>
+                    <option>{"Bả Bột & Sơn Nước"}</option>
+                    <option>{"Mua Vật Liệu Sỉ/Lẻ"}</option>
+                    <option>{"Tư Vấn Trọn Gói"}</option>
                   </select>
                 </div>
               </div>
               <div className="cf-row">
                 <div className="cf-field">
-                  <label className="cf-label">Diện Tích (m²)</label>
+                  <label className="cf-label">{"Diện Tích (m²)"}</label>
                   <input
                     className="cf-input"
                     type="text"
@@ -1950,7 +2297,7 @@ export default function LandingPage() {
                   />
                 </div>
                 <div className="cf-field">
-                  <label className="cf-label">Địa Điểm Công Trình</label>
+                  <label className="cf-label">{"Địa Điểm Công Trình"}</label>
                   <input
                     className="cf-input"
                     type="text"
@@ -1966,7 +2313,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="cf-field">
-                <label className="cf-label">Ghi Chú / Yêu Cầu Thêm</label>
+                <label className="cf-label">{"Ghi Chú / Yêu Cầu Thêm"}</label>
                 <textarea
                   className="cf-textarea"
                   placeholder="Mô tả thêm yêu cầu..."
@@ -1981,12 +2328,13 @@ export default function LandingPage() {
                 type="submit"
                 disabled={contactLoading}
               >
-                {contactLoading ? "⏳ Đang gửi..." : "📩 Gửi Yêu Cầu Báo Giá"}
+                {"📩 Gửi Yêu Cầu Báo Giá"}
               </button>
               {contactSuccess && (
                 <div className="cf-success show">
-                  ✅ Gửi thành công! Chúng tôi sẽ liên hệ lại trong vòng 30
-                  phút. Cảm ơn bạn!
+                  {
+                    "✅ Gửi thành công! Chúng tôi sẽ liên hệ lại trong vòng 30 phút. Cảm ơn bạn!"
+                  }
                 </div>
               )}
             </form>
@@ -2001,14 +2349,15 @@ export default function LandingPage() {
             className="map-container-clickable"
             onClick={() =>
               window.open(
-                content.contact_map_url || "https://maps.google.com/?q=10.732498,106.717207",
+                content.contact_map_url ||
+                  "https://maps.google.com/?q=10.732498,106.717207",
                 "_blank"
               )
             }
             title="Nhấp vào để mở Google Maps chỉ đường"
           >
             <div className="map-overlay-trigger">
-              <span>🗺️ Click để mở bản đồ định vị trên Google Maps</span>
+              <span>{"🗺️ Click để mở bản đồ định vị trên Google Maps"}</span>
             </div>
             <iframe
               className="map-frame"
@@ -2037,19 +2386,22 @@ export default function LandingPage() {
             </div>
             <div className="map-info-row">
               <span className="map-ico">🕐</span>
-              <span>7:00 – 18:00 · Thứ 2 – Chủ Nhật</span>
+              <span>{"7:00 – 18:00 · Thứ 2 – Chủ Nhật"}</span>
             </div>
             <div className="map-info-row">
               <span className="map-ico">🚗</span>
-              <span>Có bãi đậu xe miễn phí</span>
+              <span>{"Có bãi đậu xe miễn phí"}</span>
             </div>
             <a
-              href={content.contact_map_url || "https://maps.google.com/?q=10.732498,106.717207"}
+              href={
+                content.contact_map_url ||
+                "https://maps.google.com/?q=10.732498,106.717207"
+              }
               target="_blank"
               rel="noreferrer"
               className="map-cta-btn"
             >
-              🗺️ Xem Trên Google Maps
+              {"🗺️ Xem Trên Google Maps"}
             </a>
           </div>
         </div>
@@ -2058,9 +2410,9 @@ export default function LandingPage() {
       {/* FLOATING CONTACT WIDGETS */}
       <div id="zalo-float">
         <div className="zf-row">
-          <span className="zf-label">Gọi ngay</span>
+          <span className="zf-label">{"Gọi ngay"}</span>
           <a
-            href={`tel:${content.contact_phone || "0901234567"}`}
+            href={"tel:" + (content.contact_phone || "0901234567")}
             className="phone-btn"
             title="Gọi điện ngay"
           >
@@ -2071,7 +2423,7 @@ export default function LandingPage() {
           <a
             href={
               content.contact_zalo
-                ? `https://zalo.me/${content.contact_zalo.replace(/\s+/g, "")}`
+                ? "https://zalo.me/" + content.contact_zalo.replace(/\s+/g, "")
                 : "https://zalo.me/0901234567"
             }
             target="_blank"
@@ -2094,9 +2446,9 @@ export default function LandingPage() {
                 flexShrink: 0,
               }}
             >
-              Z
+              {"Z"}
             </span>
-            Chat Zalo
+            {"Chat Zalo"}
           </a>
         </div>
       </div>
@@ -2105,67 +2457,113 @@ export default function LandingPage() {
       {showRecruitModal && (
         <div className="modal-bg open" style={{ zIndex: 1000 }}>
           <div className="modal" style={{ maxWidth: "480px" }}>
-            <button className="modal-close" onClick={() => setShowRecruitModal(false)}>✕</button>
-            <div className="modal-title">💼 Đăng Ký Ứng Tuyển Thợ</div>
-            
-            <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginBottom: "1.5rem", lineHeight: "1.6" }}>
-              {content.brand_name || "ThạchPro"} liên tục tuyển thợ chính thạch cao, thợ phụ thạch cao, tổ đội thầu phụ làm việc tại TP.HCM & Bình Dương. 
+            <button
+              className="modal-close"
+              onClick={() => setShowRecruitModal(false)}
+            >
+              ✕
+            </button>
+            <div className="modal-title">{"💼 Đăng Ký Ứng Tuyển Thợ"}</div>
+
+            <p
+              style={{
+                color: "var(--muted)",
+                fontSize: "0.82rem",
+                marginBottom: "1.5rem",
+                lineHeight: "1.6",
+              }}
+            >
+              {(content.brand_name || "ThạchPro") +
+                " liên tục tuyển thợ chính thạch cao, thợ phụ thạch cao, tổ đội thầu phụ làm việc tại TP.HCM & Bình Dương."}
               <br />
-              <strong style={{ color: "var(--accent)", display: "block", marginTop: "0.5rem", fontSize: "0.9rem" }}>
-                📞 Hotline liên hệ trực tiếp Chủ: {content.contact_phone || "0901 234 567"}
+              <strong
+                style={{
+                  color: "var(--accent)",
+                  display: "block",
+                  marginTop: "0.5rem",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {"📞 Hotline liên hệ trực tiếp Chủ: " +
+                  (content.contact_phone || "0901 234 567")}
               </strong>
             </p>
 
             <form onSubmit={submitRecruitment}>
               <div className="mf-field">
-                <label className="mf-label">Họ & Tên của bạn *</label>
+                <label className="mf-label">{"Họ & Tên của bạn *"}</label>
                 <input
                   className="mf-input"
                   type="text"
                   placeholder="Nguyễn Văn A"
                   value={recruitForm.name}
-                  onChange={(e) => setRecruitForm({ ...recruitForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setRecruitForm({ ...recruitForm, name: e.target.value })
+                  }
                   required
                 />
               </div>
               <div className="mf-field">
-                <label className="mf-label">Số Điện Thoại liên hệ *</label>
+                <label className="mf-label">{"Số Điện Thoại liên hệ *"}</label>
                 <input
                   className="mf-input"
                   type="tel"
                   placeholder="0901 234 567"
                   value={recruitForm.phone}
-                  onChange={(e) => setRecruitForm({ ...recruitForm, phone: e.target.value })}
+                  onChange={(e) =>
+                    setRecruitForm({ ...recruitForm, phone: e.target.value })
+                  }
                   required
                 />
               </div>
               <div className="mf-field">
-                <label className="mf-label">Vị trí muốn ứng tuyển *</label>
+                <label className="mf-label">{"Vị trí muốn ứng tuyển *"}</label>
                 <select
                   className="mf-select"
                   value={recruitForm.position}
-                  onChange={(e) => setRecruitForm({ ...recruitForm, position: e.target.value })}
+                  onChange={(e) =>
+                    setRecruitForm({ ...recruitForm, position: e.target.value })
+                  }
                   required
                 >
-                  <option value="">-- Chọn vị trí thợ --</option>
-                  <option value="Thợ Chính">Thợ Chính (Đóng khung trần/vách)</option>
-                  <option value="Thợ Phụ">Thợ Phụ (Bê tấm, phụ việc bắn vít)</option>
-                  <option value="Thợ Sơn Nước">Thợ Sơn Nước / Bả Bột Matit</option>
-                  <option value="Tổ Đội Thầu">Tổ Đội Thầu Phụ (Cả nhóm thợ)</option>
+                  <option value="">{"-- Chọn vị trí thợ --"}</option>
+                  <option value="Thợ Chính">
+                    {"Thợ Chính (Đóng khung trần/vách)"}
+                  </option>
+                  <option value="Thợ Phụ">
+                    {"Thợ Phụ (Bê tấm, phụ việc bắn vít)"}
+                  </option>
+                  <option value="Thợ Sơn Nước">
+                    {"Thợ Sơn Nước / Bả Bột Matit"}
+                  </option>
+                  <option value="Tổ Đội Thầu">
+                    {"Tổ Đội Thầu Phụ (Cả nhóm thợ)"}
+                  </option>
                 </select>
               </div>
               <div className="mf-field">
-                <label className="mf-label">Số năm kinh nghiệm & Ghi chú thêm</label>
+                <label className="mf-label">
+                  {"Số năm kinh nghiệm & Ghi chú thêm"}
+                </label>
                 <textarea
                   className="mf-textarea"
                   placeholder="Mô tả ngắn kinh nghiệm làm thạch cao của bạn..."
                   value={recruitForm.experience}
-                  onChange={(e) => setRecruitForm({ ...recruitForm, experience: e.target.value })}
+                  onChange={(e) =>
+                    setRecruitForm({
+                      ...recruitForm,
+                      experience: e.target.value,
+                    })
+                  }
                   style={{ minHeight: "80px" }}
                 />
               </div>
-              <button type="submit" className="cf-submit" style={{ marginTop: "1rem" }}>
-                📩 Nộp Hồ Sơ Ứng Tuyển
+              <button
+                type="submit"
+                className="cf-submit"
+                style={{ marginTop: "1rem" }}
+              >
+                {"📩 Nộp Hồ Sơ Ứng Tuyển"}
               </button>
             </form>
           </div>
@@ -2178,7 +2576,11 @@ export default function LandingPage() {
           <div className="footer-brand">
             <a href="#" className="logo-wrap">
               {content.logo_image ? (
-                <img src={content.logo_image} alt="Logo" style={{ height: "45px", objectFit: "contain" }} />
+                <img
+                  src={content.logo_image}
+                  alt="Logo"
+                  style={{ height: "45px", objectFit: "contain" }}
+                />
               ) : (
                 <>
                   <div className="logo-icon">🏠</div>
@@ -2208,58 +2610,58 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="footer-col">
-            <h4>Dịch Vụ</h4>
+            <h4>{"Dịch Vụ"}</h4>
             <ul>
               <li>
-                <a href="#services">→ Trần Thạch Cao Phẳng</a>
+                <a href="#services">{"→ Trần Thạch Cao Phẳng"}</a>
               </li>
               <li>
-                <a href="#services">→ Trần Giật Cấp</a>
+                <a href="#services">{"→ Trần Giật Cấp"}</a>
               </li>
               <li>
-                <a href="#services">→ Vách Ngăn Nhẹ</a>
+                <a href="#services">{"→ Vách Ngăn Nhẹ"}</a>
               </li>
               <li>
-                <a href="#services">→ Phào Chỉ Trang Trí</a>
+                <a href="#services">{"→ Phào Chỉ Trang Trí"}</a>
               </li>
               <li>
-                <a href="#services">→ Bả Bột & Sơn Nước</a>
+                <a href="#services">{"→ Bả Bột & Sơn Nước"}</a>
               </li>
             </ul>
           </div>
           <div className="footer-col">
-            <h4>Vật Liệu</h4>
+            <h4>{"Vật Liệu"}</h4>
             <ul>
               <li>
-                <a href="#materials">→ Tấm Thạch Cao Knauf</a>
+                <a href="#materials">{"→ Tấm Thạch Cao Knauf"}</a>
               </li>
               <li>
-                <a href="#materials">→ Tấm Thạch Cao USG</a>
+                <a href="#materials">{"→ Tấm Thạch Cao USG"}</a>
               </li>
               <li>
-                <a href="#materials">→ Khung Thép Mạ Kẽm</a>
+                <a href="#materials">{"→ Khung Thép Mạ Kẽm"}</a>
               </li>
               <li>
-                <a href="#materials">→ Bông Khoáng</a>
+                <a href="#materials">{"→ Bông Khoáng"}</a>
               </li>
               <li>
-                <a href="#materials">→ Bột Bả & Sơn Nước</a>
+                <a href="#materials">{"→ Bột Bả & Sơn Nước"}</a>
               </li>
             </ul>
           </div>
           <div className="footer-col">
-            <h4>Liên Hệ</h4>
+            <h4>{"Liên Hệ"}</h4>
             <div className="fci">
               <span className="fci-ico">📞</span>
               <div>
                 <strong>{content.contact_phone || "0901 234 567"}</strong>
                 <br />
-                <small>{content.contact_hours || "Thứ 2 – Chủ Nhật · 7:00 – 18:00"}</small>
+                <small>{"Hotline 7:00–18:00"}</small>
               </div>
             </div>
             <div className="fci">
               <span className="fci-ico">💬</span>
-              <div>Zalo: {content.contact_zalo || "0901 234 567"}</div>
+              <div>{"Zalo: " + (content.contact_zalo || "0901 234 567")}</div>
             </div>
             <div className="fci">
               <span className="fci-ico">📧</span>
@@ -2278,8 +2680,9 @@ export default function LandingPage() {
         {/* FOOTER BOTTOM VỚI HUY HIỆU LA BÀN ĐỊNH VỊ CHỦ QUYỀN BIỂN ĐẢO */}
         <div className="footer-bottom">
           <p>
-            © 2024 <span>{content.brand_name || "ThạchPro"}</span>. Tất cả quyền
-            được bảo lưu.
+            {"© 2024 "}
+            <span>{content.brand_name || "ThạchPro"}</span>
+            {". Tất cả quyền được bảo lưu."}
           </p>
 
           <div
@@ -2330,27 +2733,27 @@ export default function LandingPage() {
 
             <div className="vn-coordinates-block">
               <div className="coord-item">
-                <span className="coord-title">📍 Quần đảo Hoàng Sa</span>
-                <span className="coord-val">16°30′B 112°00′Đ</span>
+                <span className="coord-title">{"📍 Quần đảo Hoàng Sa"}</span>
+                <span className="coord-val">{"16°30′B 112°00′Đ"}</span>
               </div>
               <div className="coord-item">
-                <span className="coord-title">📍 Quần đảo Trường Sa</span>
-                <span className="coord-val">10°24′B 114°21′Đ</span>
+                <span className="coord-title">{"📍 Quần đảo Trường Sa"}</span>
+                <span className="coord-val">{"10°24′B 114°21′Đ"}</span>
               </div>
             </div>
 
             <div className="vn-sovereignty-divider"></div>
 
             <div className="vn-sovereignty-text">
-              <span className="slogan-main">HOÀNG SA - TRƯỜNG SA</span>
-              <span className="slogan-sub">LÀ CỦA VIỆT NAM 🇻🇳</span>
+              <span className="slogan-main">{"HOÀNG SA - TRƯỜNG SA"}</span>
+              <span className="slogan-sub">{"LÀ CỦA VIỆT NAM 🇻🇳"}</span>
             </div>
           </div>
 
           <div className="cert-row">
-            <div className="cert-badge">Knauf Partner</div>
-            <div className="cert-badge">USG Authorized</div>
-            <div className="cert-badge">ISO 9001</div>
+            <div className="cert-badge">{"Knauf Partner"}</div>
+            <div className="cert-badge">{"USG Authorized"}</div>
+            <div className="cert-badge">{"ISO 9001"}</div>
           </div>
         </div>
       </footer>

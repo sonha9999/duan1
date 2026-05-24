@@ -112,6 +112,19 @@ const SIMULATOR_ROOMS = [
   "🏛️ Biệt Thự",
 ];
 
+// Định dạng khung Style kính mờ phát sáng đồng bộ cho tất cả Modals, tránh xung đột CSS
+const MODAL_WRAPPER_STYLE = {
+  display: "flex",
+  position: "fixed",
+  inset: 0,
+  background: "rgba(10, 11, 13, 0.8)",
+  backdropFilter: "blur(6px)",
+  zIndex: 9999,
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "1.5rem",
+};
+
 const compressImage = (file, maxWidth = 1200) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -166,8 +179,9 @@ const sanitizeFilename = (filename) => {
 
 export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [emailInput, setEmailInput] = useState(""); 
+  const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [activeTab, setActiveTab] = useState("gallery");
@@ -239,7 +253,8 @@ export default function AdminPanel() {
     contact_map_url: "https://maps.google.com/?q=10.732498,106.717207",
     hero_tag: "Đang nhận dự án — TP.HCM & Bình Dương",
     hero_title: "Kiến Tạo<br>Không Gian<br><em>Hoàn Hảo</em>",
-    hero_sub: "Đơn vị thi công thạch cao hàng đầu tại TP.HCM — trần giật cấp, vách ngăn, phào chỉ trang trí. Cung cấp vật liệu xây dựng cao cấp Knauf, USG chính hãng, giao tận công trình.",
+    hero_sub:
+      "Đơn vị thi công thạch cao hàng đầu tại TP.HCM — trần giật cấp, vách ngăn, phào chỉ trang trí. Cung cấp vật liệu xây dựng cao cấp Knauf, USG chính hãng, giao tận công trình.",
     hero_btn1: "→ Nhận Báo Giá Miễn Phí",
     hero_btn2: "Xem Công Trình →",
     stat1_lbl: "Công trình hoàn thành",
@@ -247,11 +262,14 @@ export default function AdminPanel() {
     stat3_lbl: "Khách hàng hài lòng",
     contact_hours: "Hotline 7:00–18:00",
     about_title: "Hơn 15 Năm Xây Dựng Niềm Tin",
-    about_desc: "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM.",
+    about_desc:
+      "ThạchPro được thành lập lâu năm, đã hoàn thiện hơn 500 công trình từ căn hộ cao cấp, biệt thự, văn phòng đến trung tâm thương mại trên toàn TP.HCM.",
     cta_title: "Bắt Đầu Dự Án<br/>Của Bạn Hôm Ngày",
-    cta_desc: "Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchPro luôn sẵn sàng biến ý tưởng của bạn thành hiện thực.",
+    cta_desc:
+      "Liên hệ ngay để được tư vấn miễn phí và nhận báo giá trong 24 giờ. Đội ngũ ThạchPro luôn sẵn sàng biến ý tưởng của bạn thành hiện thực.",
     cta_btn: "📞 Gọi Ngay: 0901 234 567",
-    footer_desc: "Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008.",
+    footer_desc:
+      "Đơn vị thi công thạch cao và cung cấp vật liệu xây dựng chuyên nghiệp tại TP.HCM từ năm 2008.",
     color_primary: "#e8a020",
     color_secondary: "#f5c842",
     logo_image: "",
@@ -279,12 +297,30 @@ export default function AdminPanel() {
   }, []);
 
   const checkUserSession = async () => {
+    const loginTimeStr = localStorage.getItem("admin_login_time");
+
+    if (loginTimeStr) {
+      const loginTime = parseInt(loginTimeStr);
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+
+      if (Date.now() - loginTime > twentyFourHours) {
+        alert(
+          "Phiên làm việc đã hết hạn (Quá 24 giờ). Hệ thống tự động đăng xuất để bảo mật!"
+        );
+        await doLogout();
+        return;
+      }
+    }
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
     if (session) {
       setIsAuthenticated(true);
       fetchData();
+    } else {
+      setIsAuthenticated(false);
     }
   };
 
@@ -299,22 +335,32 @@ export default function AdminPanel() {
   };
 
   const doLogin = async () => {
-    if (!emailInput.trim() || !passwordInput.trim()) return;
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      alert("Vui lòng nhập đầy đủ Tài khoản và Mật khẩu!");
+      return;
+    }
     setIsLoggingIn(true);
     setLoginError(false);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailInput,
-        password: passwordInput,
-      });
+      const isEmailFormat = emailInput.includes("@");
+      const credentials = isEmailFormat
+        ? { email: emailInput, password: passwordInput }
+        : { phone: emailInput, password: passwordInput };
+
+      const { data, error } = await supabase.auth.signInWithPassword(
+        credentials
+      );
+
       if (error) {
         setLoginError(true);
         setPasswordInput("");
+        alert("Đăng nhập thất bại: " + error.message);
       } else {
+        localStorage.setItem("admin_login_time", Date.now().toString());
         setIsAuthenticated(true);
         fetchData();
       }
-    } catch {
+    } catch (err) {
       alert("Lỗi kết nối tới máy chủ Supabase.");
     } finally {
       setIsLoggingIn(false);
@@ -322,7 +368,11 @@ export default function AdminPanel() {
   };
 
   const doLogout = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem("admin_login_time");
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.warn("Đăng xuất: " + error.message);
+    }
     setIsAuthenticated(false);
   };
 
@@ -362,8 +412,8 @@ export default function AdminPanel() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       setGalleryItems(data || []);
-    } catch {
-      alert("Lỗi tải danh mục công trình.");
+    } catch (err) {
+      alert("Lỗi tải danh mục công trình: " + err.message);
     } finally {
       setLoadingGallery(false);
     }
@@ -403,8 +453,12 @@ export default function AdminPanel() {
         uploadedUrls.push(publicUrl);
       }
 
-      const currentImagesList = galleryForm.image ? galleryForm.image.split("|").filter(Boolean) : [];
-      const finalImageString = [...currentImagesList, ...uploadedUrls].join("|");
+      const currentImagesList = galleryForm.image
+        ? galleryForm.image.split("|").filter(Boolean)
+        : [];
+      const finalImageString = [...currentImagesList, ...uploadedUrls].join(
+        "|"
+      );
 
       const { error } = await supabase.from("gallery").upsert({
         id: galleryForm.id || "CT" + Date.now(),
@@ -430,8 +484,12 @@ export default function AdminPanel() {
   };
 
   const handleDeleteSubImage = (indexToDelete) => {
-    const currentImagesList = galleryForm.image ? galleryForm.image.split("|").filter(Boolean) : [];
-    const updatedList = currentImagesList.filter((_, idx) => idx !== indexToDelete);
+    const currentImagesList = galleryForm.image
+      ? galleryForm.image.split("|").filter(Boolean)
+      : [];
+    const updatedList = currentImagesList.filter(
+      (_, idx) => idx !== indexToDelete
+    );
     setGalleryForm({
       ...galleryForm,
       image: updatedList.join("|"),
@@ -440,7 +498,8 @@ export default function AdminPanel() {
 
   const deleteGallery = async (id) => {
     if (window.confirm("Chắc chắn xóa công trình này?")) {
-      await supabase.from("gallery").delete().eq("id", id);
+      const { error } = await supabase.from("gallery").delete().eq("id", id);
+      if (error) alert("Lỗi xóa công trình: " + error.message);
       loadGallery();
     }
   };
@@ -449,16 +508,19 @@ export default function AdminPanel() {
   const loadReviews = async () => {
     setLoadingReviews(true);
     try {
-      const { data } = await supabase.from("reviews").select("*");
+      const { data, error } = await supabase.from("reviews").select("*");
+      if (error) throw error;
       const dbReviews = data || [];
-      const combined = DEFAULT_REVIEWS.map(def => {
-        const edited = dbReviews.find(db => db.id === def.id);
+      const combined = DEFAULT_REVIEWS.map((def) => {
+        const edited = dbReviews.find((db) => db.id === def.id);
         return edited ? edited : def;
       });
-      const newlyAdded = dbReviews.filter(db => !DEFAULT_REVIEWS.some(def => def.id === db.id));
+      const newlyAdded = dbReviews.filter(
+        (db) => !DEFAULT_REVIEWS.some((def) => def.id === db.id)
+      );
       setReviews([...combined, ...newlyAdded]);
-    } catch {
-      console.warn("Lỗi tải đánh giá.");
+    } catch (err) {
+      alert("Lỗi tải đánh giá: " + err.message);
     } finally {
       setLoadingReviews(false);
     }
@@ -497,19 +559,20 @@ export default function AdminPanel() {
       }
 
       const finalId = reviewForm.id || "RV" + Date.now();
-      
-      await supabase.from("reviews").upsert({
+
+      const { error } = await supabase.from("reviews").upsert({
         ...reviewForm,
-        id: finalId, 
+        id: finalId,
         avatar: avatarUrl,
       });
+      if (error) throw error;
 
       setShowReviewModal(false);
       setSelectedAvatarFile(null);
       loadReviews();
       alert("Lưu đánh giá thành công!");
     } catch (error) {
-      alert("Lưu đánh giá lỗi.");
+      alert("Lưu đánh giá lỗi: " + error.message);
     } finally {
       setIsSavingReview(false);
     }
@@ -517,7 +580,8 @@ export default function AdminPanel() {
 
   const deleteReview = async (id) => {
     if (window.confirm("Xóa đánh giá này?")) {
-      await supabase.from("reviews").delete().eq("id", id);
+      const { error } = await supabase.from("reviews").delete().eq("id", id);
+      if (error) alert("Lỗi xóa đánh giá: " + error.message);
       loadReviews();
     }
   };
@@ -526,16 +590,19 @@ export default function AdminPanel() {
   const loadMaterials = async () => {
     setLoadingMaterials(true);
     try {
-      const { data } = await supabase.from("materials").select("*");
+      const { data, error } = await supabase.from("materials").select("*");
+      if (error) throw error;
       const dbMaterials = data || [];
-      const combined = DEFAULT_MATERIALS.map(def => {
-        const edited = dbMaterials.find(db => db.id === def.id);
+      const combined = DEFAULT_MATERIALS.map((def) => {
+        const edited = dbMaterials.find((db) => db.id === def.id);
         return edited ? edited : def;
       });
-      const newlyAdded = dbMaterials.filter(db => !DEFAULT_MATERIALS.some(def => def.id === db.id));
+      const newlyAdded = dbMaterials.filter(
+        (db) => !DEFAULT_MATERIALS.some((def) => def.id === db.id)
+      );
       setMaterials([...combined, ...newlyAdded]);
-    } catch {
-      console.warn("Lỗi tải vật liệu.");
+    } catch (err) {
+      alert("Lỗi tải vật liệu: " + err.message);
     } finally {
       setLoadingMaterials(false);
     }
@@ -550,15 +617,16 @@ export default function AdminPanel() {
     setIsSavingMaterial(true);
     try {
       const finalId = materialForm.id || "MAT" + Date.now();
-      await supabase.from("materials").upsert({
+      const { error } = await supabase.from("materials").upsert({
         ...materialForm,
         id: finalId,
       });
+      if (error) throw error;
       setShowMaterialModal(false);
       loadMaterials();
       alert("Lưu vật liệu thành công!");
     } catch (error) {
-      alert("Lỗi lưu vật liệu.");
+      alert("Lỗi lưu vật liệu: " + error.message);
     } finally {
       setIsSavingMaterial(false);
     }
@@ -566,7 +634,8 @@ export default function AdminPanel() {
 
   const deleteMaterial = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa vật liệu này?")) {
-      await supabase.from("materials").delete().eq("id", id);
+      const { error } = await supabase.from("materials").delete().eq("id", id);
+      if (error) alert("Lỗi xóa vật liệu: " + error.message);
       loadMaterials();
     }
   };
@@ -575,19 +644,23 @@ export default function AdminPanel() {
   const loadContacts = async () => {
     setLoadingContacts(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("contacts")
         .select("*")
         .order("created_at", { ascending: false });
+      if (error) throw error;
       setContacts(data || []);
-    } catch {}
+    } catch (err) {
+      alert("Lỗi tải liên hệ khách hàng: " + err.message);
+    }
     setLoadingContacts(false);
   };
 
   // Tải cấu hình chữ trang chủ (Content Editor)
   const loadConfigs = async () => {
     try {
-      const { data } = await supabase.from("content").select("*");
+      const { data, error } = await supabase.from("content").select("*");
+      if (error) throw error;
       if (data && data.length > 0) {
         const obj = { ...configs };
         data.forEach((item) => {
@@ -595,7 +668,9 @@ export default function AdminPanel() {
         });
         setConfigs(obj);
       }
-    } catch {}
+    } catch (err) {
+      alert("Lỗi tải cấu hình: " + err.message);
+    }
   };
 
   const handleLogoFileChange = (e) => {
@@ -643,7 +718,7 @@ export default function AdminPanel() {
       loadConfigs();
     } catch (err) {
       console.error(err);
-      alert("Lỗi lưu cấu hình.");
+      alert("Lỗi lưu cấu hình: " + err.message);
     } finally {
       setIsSavingConfigs(false);
     }
@@ -653,32 +728,38 @@ export default function AdminPanel() {
   const loadRecruitment = async () => {
     setLoadingRecruitment(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("recruitment")
         .select("*")
         .order("created_at", { ascending: false });
+      if (error) throw error;
       setRecruitmentList(data || []);
-    } catch {}
+    } catch (err) {
+      alert("Lỗi tải danh sách ứng tuyển: " + err.message);
+    }
     setLoadingRecruitment(false);
   };
 
   const deleteRecruit = async (id) => {
     if (window.confirm("Xóa hồ sơ ứng tuyển này?")) {
-      await supabase.from("recruitment").delete().eq("id", id);
+      const { error } = await supabase
+        .from("recruitment")
+        .delete()
+        .eq("id", id);
+      if (error) alert("Lỗi xóa hồ sơ: " + error.message);
       loadRecruitment();
     }
   };
 
-  // ==========================================
-  // NÂNG CẤP: CRUD QUẢN LÝ ẢNH GIẢ LẬP 3D (SIMULATOR)
-  // ==========================================
+  // CRUD QUẢN LÝ ẢNH GIẢ LẬP 3D (SIMULATOR)
   const loadSimulator = async () => {
     setLoadingSimulator(true);
     try {
-      const { data } = await supabase.from("simulator").select("*");
+      const { data, error } = await supabase.from("simulator").select("*");
+      if (error) throw error;
       setSimulatorItems(data || []);
-    } catch {
-      console.warn("Lỗi tải ảnh giả lập.");
+    } catch (err) {
+      alert("Lỗi tải giả lập: " + err.message);
     }
     setLoadingSimulator(false);
   };
@@ -711,11 +792,15 @@ export default function AdminPanel() {
         uploadedUrls.push(publicUrl);
       }
 
-      const currentImagesList = simulatorForm.image ? simulatorForm.image.split("|").filter(Boolean) : [];
-      const finalImageString = [...currentImagesList, ...uploadedUrls].join("|");
+      const currentImagesList = simulatorForm.image
+        ? simulatorForm.image.split("|").filter(Boolean)
+        : [];
+      const finalImageString = [...currentImagesList, ...uploadedUrls].join(
+        "|"
+      );
 
-      // Đồng bộ hóa khóa ID bằng cách trải (...simulatorForm) sau cùng để tránh ghi đè ID rỗng
-      const cleanId = simulatorForm.id || sanitizeFilename(simulatorForm.room_name);
+      const cleanId =
+        simulatorForm.id || sanitizeFilename(simulatorForm.room_name);
 
       const { error } = await supabase.from("simulator").upsert({
         ...simulatorForm,
@@ -731,15 +816,19 @@ export default function AdminPanel() {
       alert("Cập nhật album ảnh phòng 3D thành công!");
     } catch (err) {
       console.error(err);
-      alert("Có lỗi xảy ra, vui lòng thử lại.");
+      alert("Có lỗi xảy ra: " + err.message);
     } finally {
       setIsSavingSimulator(false);
     }
   };
 
   const handleDeleteSimSubImage = (indexToDelete) => {
-    const currentImagesList = simulatorForm.image ? simulatorForm.image.split("|").filter(Boolean) : [];
-    const updatedList = currentImagesList.filter((_, idx) => idx !== indexToDelete);
+    const currentImagesList = simulatorForm.image
+      ? simulatorForm.image.split("|").filter(Boolean)
+      : [];
+    const updatedList = currentImagesList.filter(
+      (_, idx) => idx !== indexToDelete
+    );
     setSimulatorForm({
       ...simulatorForm,
       image: updatedList.join("|"),
@@ -748,16 +837,14 @@ export default function AdminPanel() {
 
   const deleteSimulator = async (id) => {
     if (window.confirm("Xóa toàn bộ album của phòng này?")) {
-      await supabase.from("simulator").delete().eq("id", id);
+      const { error } = await supabase.from("simulator").delete().eq("id", id);
+      if (error) alert("Lỗi xóa: " + error.message);
       loadSimulator();
     }
   };
 
-  // NÂNG CẤP ĐẶC BIỆT: Bộ phân tích Ghi chú khách hàng để hiển thị ảnh Thumbnail nhỏ trực tiếp
   const renderContactNote = (note) => {
     if (!note) return "—";
-    
-    // Tìm liên kết URL trong văn bản ghi chú
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const matches = note.match(urlRegex);
     if (matches && matches.length > 0) {
@@ -767,11 +854,33 @@ export default function AdminPanel() {
         <div>
           {textWithoutUrl}
           <div style={{ marginTop: "0.5rem" }}>
-            <a href={url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: "var(--accent)",
+                textDecoration: "underline",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.3rem",
+              }}
+            >
               🖼️ Xem ảnh mẫu khách chọn
             </a>
-            {/* Hiển thị trực tiếp ảnh nhỏ thumbnail cực kỳ trực quan */}
-            <img src={url} alt="" style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "4px", display: "block", marginTop: "0.3rem", border: "1px solid var(--line)" }} />
+            <img
+              src={url}
+              alt=""
+              style={{
+                width: "80px",
+                height: "60px",
+                objectFit: "cover",
+                borderRadius: "4px",
+                display: "block",
+                marginTop: "0.3rem",
+                border: "1px solid var(--line)",
+              }}
+            />
           </div>
         </div>
       );
@@ -779,6 +888,76 @@ export default function AdminPanel() {
     return note;
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div id="login-screen">
+        <div className="login-box">
+          <div className="login-logo">🏠</div>
+          <div className="login-title">
+            Thạch<span>Pro</span> Admin
+          </div>
+          <div className="login-sub">Nhập tài khoản & mật khẩu để tiếp tục</div>
+          <input
+            className="login-input"
+            type="email"
+            placeholder="admin@thachpro.vn"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            style={{
+              marginBottom: "0.8rem",
+              letterSpacing: "normal",
+              textAlign: "left",
+            }}
+            disabled={isLoggingIn}
+          />
+
+          {/* MẮT ẨN HIỆN MẬT KHẨU HOẠT ĐỘNG CHUẨN XÁC */}
+          <div style={{ position: "relative", marginBottom: "1rem" }}>
+            <input
+              className="login-input"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && doLogin()}
+              disabled={isLoggingIn}
+              style={{ paddingRight: "2.5rem", margin: 0 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "0.8rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                color: "var(--muted)",
+                cursor: "pointer",
+                fontSize: "1.1rem",
+              }}
+            >
+              {showPassword ? "👁️" : "🙈"}
+            </button>
+          </div>
+
+          <button
+            className="login-btn"
+            onClick={doLogin}
+            disabled={isLoggingIn}
+          >
+            {isLoggingIn ? "⏳ Đang xác thực..." : "🔐 Đăng Nhập"}
+          </button>
+          {loginError && (
+            <div className="login-error" style={{ marginTop: "1rem" }}>
+              ❌ Email hoặc Mật khẩu không chính xác!
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div id="main" style={{ display: "block" }}>
@@ -851,7 +1030,6 @@ export default function AdminPanel() {
         >
           📋 Khách Hàng
         </div>
-        {/* Tab Quản lý ảnh giả lập 3D chuyên sâu */}
         <div
           className={`tab ${activeTab === "simulator" ? "active" : ""}`}
           onClick={() => setActiveTab("simulator")}
@@ -875,28 +1053,40 @@ export default function AdminPanel() {
       <div className="content">
         {/* KHU VỰC THỐNG KÊ NHANH (DASHBOARD) */}
         <div className="stats-row">
-          <div className="stat-card" style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}>
+          <div
+            className="stat-card"
+            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
+          >
             <div className="stat-ico">🖼️</div>
             <div>
               <div className="stat-num">{galleryItems.length}</div>
               <div className="stat-lbl">Công trình đã đăng</div>
             </div>
           </div>
-          <div className="stat-card" style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}>
+          <div
+            className="stat-card"
+            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
+          >
             <div className="stat-ico">⭐</div>
             <div>
               <div className="stat-num">{reviews.length}</div>
               <div className="stat-lbl">Đánh giá khách hàng</div>
             </div>
           </div>
-          <div className="stat-card" style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}>
+          <div
+            className="stat-card"
+            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
+          >
             <div className="stat-ico">📦</div>
             <div>
               <div className="stat-num">{materials.length}</div>
               <div className="stat-lbl">Vật liệu thi công</div>
             </div>
           </div>
-          <div className="stat-card" style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}>
+          <div
+            className="stat-card"
+            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
+          >
             <div className="stat-ico">🎮</div>
             <div>
               <div className="stat-num">{simulatorItems.length}</div>
@@ -951,22 +1141,41 @@ export default function AdminPanel() {
                     </thead>
                     <tbody>
                       {galleryItems.map((item) => {
-                        const imagesList = item.image ? item.image.split("|").filter(Boolean) : [];
+                        const imagesList = item.image
+                          ? item.image.split("|").filter(Boolean)
+                          : [];
                         return (
                           <tr key={item.id}>
                             <td>
-                              <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", maxWidth: "200px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "0.3rem",
+                                  flexWrap: "wrap",
+                                  maxWidth: "200px",
+                                }}
+                              >
                                 {imagesList.map((imgUrl, imgIdx) => (
                                   <img
                                     key={imgIdx}
                                     className="td-img"
                                     src={imgUrl}
                                     alt=""
-                                    style={{ width: "40px", height: "35px", borderRadius: "4px" }}
-                                    onError={(e) => (e.target.style.display = "none")}
+                                    style={{
+                                      width: "40px",
+                                      height: "35px",
+                                      borderRadius: "4px",
+                                    }}
+                                    onError={(e) =>
+                                      (e.target.style.display = "none")
+                                    }
                                   />
                                 ))}
-                                {imagesList.length === 0 && <span style={{ color: "var(--muted)" }}>Không có ảnh</span>}
+                                {imagesList.length === 0 && (
+                                  <span style={{ color: "var(--muted)" }}>
+                                    Không có ảnh
+                                  </span>
+                                )}
                               </div>
                             </td>
                             <td className="td-title">{item.title}</td>
@@ -1058,11 +1267,40 @@ export default function AdminPanel() {
                       {reviews.map((item) => (
                         <tr key={item.id}>
                           <td>
-                            <div style={{ width: "35px", height: "35px", borderRadius: "50%", background: "var(--c3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "1px solid var(--line)" }}>
+                            <div
+                              style={{
+                                width: "35px",
+                                height: "35px",
+                                borderRadius: "50%",
+                                background: "var(--c3)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                overflow: "hidden",
+                                border: "1px solid var(--line)",
+                              }}
+                            >
                               {item.avatar ? (
-                                <img src={item.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                <img
+                                  src={item.avatar}
+                                  alt=""
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                  }}
+                                />
                               ) : (
-                                <span style={{ fontSize: "0.8rem", fontWeight: "700" }}>{item.name ? item.name.charAt(0).toUpperCase() : "T"}</span>
+                                <span
+                                  style={{
+                                    fontSize: "0.8rem",
+                                    fontWeight: "700",
+                                  }}
+                                >
+                                  {item.name
+                                    ? item.name.charAt(0).toUpperCase()
+                                    : "T"}
+                                </span>
                               )}
                             </div>
                           </td>
@@ -1269,7 +1507,7 @@ export default function AdminPanel() {
                           </td>
                           <td>{row.area || "—"}</td>
                           <td>{row.address || "—"}</td>
-                          <td>{renderContactNote(row.note)}</td> {/* Đã tích hợp tính năng hiển thị ảnh Thumbnail thông minh */}
+                          <td>{renderContactNote(row.note)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1285,7 +1523,9 @@ export default function AdminPanel() {
           <div className="tab-panel active">
             <div className="panel">
               <div className="panel-head">
-                <div className="panel-title">🎮 Quản Lý Album Ảnh Mô Phỏng Phòng 3D</div>
+                <div className="panel-title">
+                  🎮 Quản Lý Album Ảnh Mô Phỏng Phòng 3D
+                </div>
                 <div style={{ display: "flex", gap: ".7rem" }}>
                   <button className="btn-refresh" onClick={loadSimulator}>
                     🔄 Làm Mới
@@ -1321,26 +1561,53 @@ export default function AdminPanel() {
                     </thead>
                     <tbody>
                       {simulatorItems.map((item) => {
-                        const imagesList = item.image ? item.image.split("|").filter(Boolean) : [];
+                        const imagesList = item.image
+                          ? item.image.split("|").filter(Boolean)
+                          : [];
                         return (
                           <tr key={item.id}>
                             <td>
-                              <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", maxWidth: "300px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "0.3rem",
+                                  flexWrap: "wrap",
+                                  maxWidth: "300px",
+                                }}
+                              >
                                 {imagesList.map((imgUrl, imgIdx) => (
                                   <img
                                     key={imgIdx}
                                     src={imgUrl}
                                     alt=""
-                                    style={{ width: "50px", height: "40px", borderRadius: "4px", objectFit: "cover" }}
-                                    onError={(e) => (e.target.style.display = "none")}
+                                    style={{
+                                      width: "50px",
+                                      height: "40px",
+                                      borderRadius: "4px",
+                                      objectFit: "cover",
+                                    }}
+                                    onError={(e) =>
+                                      (e.target.style.display = "none")
+                                    }
                                   />
                                 ))}
-                                {imagesList.length === 0 && <span style={{ color: "var(--muted)" }}>Chưa tải ảnh</span>}
+                                {imagesList.length === 0 && (
+                                  <span style={{ color: "var(--muted)" }}>
+                                    Chưa tải ảnh
+                                  </span>
+                                )}
                               </div>
                             </td>
-                            <td className="td-title" style={{ fontSize: "1rem" }}>{item.room_name}</td>
+                            <td
+                              className="td-title"
+                              style={{ fontSize: "1rem" }}
+                            >
+                              {item.room_name}
+                            </td>
                             <td>
-                              <span className="cat-badge">{imagesList.length} ảnh</span>
+                              <span className="cat-badge">
+                                {imagesList.length} ảnh
+                              </span>
                             </td>
                             <td>
                               <div className="action-row">
@@ -1367,8 +1634,12 @@ export default function AdminPanel() {
                       })}
                       {simulatorItems.length === 0 && (
                         <tr>
-                          <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
-                            Chưa có phòng 3D nào được cấu hình ảnh. Hãy bấm "Tải Ảnh Phòng 3D" để bắt đầu!
+                          <td
+                            colSpan="4"
+                            style={{ textAlign: "center", padding: "2rem" }}
+                          >
+                            Chưa có phòng 3D nào được cấu hình ảnh. Hãy bấm "Tải
+                            Ảnh Phòng 3D" để bắt đầu!
                           </td>
                         </tr>
                       )}
@@ -1385,50 +1656,163 @@ export default function AdminPanel() {
           <div className="tab-panel active">
             <div className="panel">
               <div className="panel-head">
-                <div className="panel-title">⚙️ Cấu Hình Thông Tin Chữ & Màu Sắc Giao Diện</div>
+                <div className="panel-title">
+                  ⚙️ Cấu Hình Thông Tin Chữ & Màu Sắc Giao Diện
+                </div>
               </div>
               <form onSubmit={saveConfigs} className="section-fields">
-                
                 {/* Tùy chỉnh màu sắc */}
-                <div style={{ background: "rgba(232,160,32,0.05)", padding: "1.5rem", borderRadius: "10px", border: "1px dashed var(--line)", marginBottom: "1.5rem" }}>
-                  <div className="panel-title" style={{ marginBottom: "1.5rem", fontSize: "0.95rem" }}>🎨 Tùy Chỉnh Màu Sắc Giao Diện</div>
+                <div
+                  style={{
+                    background: "rgba(232,160,32,0.05)",
+                    padding: "1.5rem",
+                    borderRadius: "10px",
+                    border: "1px dashed var(--line)",
+                    marginBottom: "1.5rem",
+                  }}
+                >
+                  <div
+                    className="panel-title"
+                    style={{ marginBottom: "1.5rem", fontSize: "0.95rem" }}
+                  >
+                    🎨 Tùy Chỉnh Màu Sắc Giao Diện
+                  </div>
                   <div className="mf-row" style={{ margin: 0, gap: "1.5rem" }}>
                     <div className="mf-field" style={{ margin: 0 }}>
-                      <label className="mf-label">Màu Chủ Đạo (Primary Color)</label>
-                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <label className="mf-label">
+                        Màu Chủ Đạo (Primary Color)
+                      </label>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          alignItems: "center",
+                        }}
+                      >
                         <input
                           type="color"
                           value={configs.color_primary || "#e8a020"}
-                          onChange={(e) => setConfigs({ ...configs, color_primary: e.target.value })}
-                          style={{ width: "50px", height: "40px", border: "none", background: "none", cursor: "pointer" }}
+                          onChange={(e) =>
+                            setConfigs({
+                              ...configs,
+                              color_primary: e.target.value,
+                            })
+                          }
+                          style={{
+                            width: "50px",
+                            height: "40px",
+                            border: "none",
+                            background: "none",
+                            cursor: "pointer",
+                          }}
                         />
-                        <span style={{ fontFamily: "monospace", color: "var(--muted)" }}>{configs.color_primary}</span>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            color: "var(--muted)",
+                          }}
+                        >
+                          {configs.color_primary}
+                        </span>
                       </div>
                     </div>
                     <div className="mf-field" style={{ margin: 0 }}>
-                      <label className="mf-label">Màu Hover/Phụ (Secondary Color)</label>
-                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <label className="mf-label">
+                        Màu Hover/Phụ (Secondary Color)
+                      </label>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          alignItems: "center",
+                        }}
+                      >
                         <input
                           type="color"
                           value={configs.color_secondary || "#f5c842"}
-                          onChange={(e) => setConfigs({ ...configs, color_secondary: e.target.value })}
-                          style={{ width: "50px", height: "40px", border: "none", background: "none", cursor: "pointer" }}
+                          onChange={(e) =>
+                            setConfigs({
+                              ...configs,
+                              color_secondary: e.target.value,
+                            })
+                          }
+                          style={{
+                            width: "50px",
+                            height: "40px",
+                            border: "none",
+                            background: "none",
+                            cursor: "pointer",
+                          }}
                         />
-                        <span style={{ fontFamily: "monospace", color: "var(--muted)" }}>{configs.color_secondary}</span>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            color: "var(--muted)",
+                          }}
+                        >
+                          {configs.color_secondary}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Tùy chỉnh LOGO */}
-                <div style={{ background: "rgba(232,160,32,0.05)", padding: "1.5rem", borderRadius: "10px", border: "1px dashed var(--line)", marginBottom: "1.5rem" }}>
-                  <div className="panel-title" style={{ marginBottom: "1.5rem", fontSize: "0.95rem" }}>🏠 Tùy Chỉnh LOGO Hình Ảnh</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-                    <div style={{ width: "80px", height: "60px", background: "var(--c3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "1px solid var(--line)", borderRadius: "6px" }}>
+                <div
+                  style={{
+                    background: "rgba(232,160,32,0.05)",
+                    padding: "1.5rem",
+                    borderRadius: "10px",
+                    border: "1px dashed var(--line)",
+                    marginBottom: "1.5rem",
+                  }}
+                >
+                  <div
+                    className="panel-title"
+                    style={{ marginBottom: "1.5rem", fontSize: "0.95rem" }}
+                  >
+                    🏠 Tùy Chỉnh LOGO Hình Ảnh
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "2rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "80px",
+                        height: "60px",
+                        background: "var(--c3)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                        border: "1px solid var(--line)",
+                        borderRadius: "6px",
+                      }}
+                    >
                       {selectedLogoFile ? (
-                        <img src={URL.createObjectURL(selectedLogoFile)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        <img
+                          src={URL.createObjectURL(selectedLogoFile)}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                          }}
+                        />
                       ) : configs.logo_image ? (
-                        <img src={configs.logo_image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        <img
+                          src={configs.logo_image}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                          }}
+                        />
                       ) : (
                         <span style={{ fontSize: "1.5rem" }}>🏠</span>
                       )}
@@ -1440,18 +1824,26 @@ export default function AdminPanel() {
                         accept="image/*"
                         onChange={handleLogoFileChange}
                       />
-                      <div className="img-hint">Chọn file ảnh Logo (khuyên dùng định dạng PNG trong suốt hoặc JPG nhỏ gọn). Để trống nếu muốn dùng logo chữ mặc định.</div>
+                      <div className="img-hint">
+                        Chọn file ảnh Logo (khuyên dùng định dạng PNG trong suốt
+                        hoặc JPG nhỏ gọn). Để trống nếu muốn dùng logo chữ mặc
+                        định.
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="field-row">
-                  <label className="field-label">Tên Thương Hiệu (Logo Chữ)</label>
+                  <label className="field-label">
+                    Tên Thương Hiệu (Logo Chữ)
+                  </label>
                   <input
                     className="f-input"
                     type="text"
                     value={configs.brand_name || ""}
-                    onChange={(e) => setConfigs({ ...configs, brand_name: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, brand_name: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1461,7 +1853,9 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.contact_phone || ""}
-                    onChange={(e) => setConfigs({ ...configs, contact_phone: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, contact_phone: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1471,7 +1865,9 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.contact_zalo || ""}
-                    onChange={(e) => setConfigs({ ...configs, contact_zalo: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, contact_zalo: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1481,7 +1877,9 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.contact_email || ""}
-                    onChange={(e) => setConfigs({ ...configs, contact_email: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, contact_email: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1491,7 +1889,12 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.contact_address || ""}
-                    onChange={(e) => setConfigs({ ...configs, contact_address: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({
+                        ...configs,
+                        contact_address: e.target.value,
+                      })
+                    }
                     required
                   />
                 </div>
@@ -1501,7 +1904,12 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.contact_map_url || ""}
-                    onChange={(e) => setConfigs({ ...configs, contact_map_url: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({
+                        ...configs,
+                        contact_map_url: e.target.value,
+                      })
+                    }
                     required
                   />
                 </div>
@@ -1511,25 +1919,35 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.hero_tag || ""}
-                    onChange={(e) => setConfigs({ ...configs, hero_tag: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, hero_tag: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Tiêu Đề Lớn Banner (Hero) * hỗ trợ thẻ &lt;br&gt;</label>
+                  <label className="field-label">
+                    Tiêu Đề Lớn Banner (Hero) * hỗ trợ thẻ &lt;br&gt;
+                  </label>
                   <textarea
                     className="f-textarea"
                     value={configs.hero_title || ""}
-                    onChange={(e) => setConfigs({ ...configs, hero_title: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, hero_title: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Mô tả ngắn Banner (Hero)</label>
+                  <label className="field-label">
+                    Mô tả ngắn Banner (Hero)
+                  </label>
                   <textarea
                     className="f-textarea"
                     value={configs.hero_sub || ""}
-                    onChange={(e) => setConfigs({ ...configs, hero_sub: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, hero_sub: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1539,7 +1957,9 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.hero_btn1 || ""}
-                    onChange={(e) => setConfigs({ ...configs, hero_btn1: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, hero_btn1: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1549,37 +1969,51 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.hero_btn2 || ""}
-                    onChange={(e) => setConfigs({ ...configs, hero_btn2: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, hero_btn2: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Nhãn Thống Kê 1 (Công trình)</label>
+                  <label className="field-label">
+                    Nhãn Thống Kê 1 (Công trình)
+                  </label>
                   <input
                     className="f-input"
                     type="text"
                     value={configs.stat1_lbl || ""}
-                    onChange={(e) => setConfigs({ ...configs, stat1_lbl: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, stat1_lbl: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Nhãn Thống Kê 2 (Năm kinh nghiệm)</label>
+                  <label className="field-label">
+                    Nhãn Thống Kê 2 (Năm kinh nghiệm)
+                  </label>
                   <input
                     className="f-input"
                     type="text"
                     value={configs.stat2_lbl || ""}
-                    onChange={(e) => setConfigs({ ...configs, stat2_lbl: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, stat2_lbl: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Nhãn Thống Kê 3 (Hài lòng)</label>
+                  <label className="field-label">
+                    Nhãn Thống Kê 3 (Hài lòng)
+                  </label>
                   <input
                     className="f-input"
                     type="text"
                     value={configs.stat3_lbl || ""}
-                    onChange={(e) => setConfigs({ ...configs, stat3_lbl: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, stat3_lbl: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1589,26 +2023,36 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.contact_hours || ""}
-                    onChange={(e) => setConfigs({ ...configs, contact_hours: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, contact_hours: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Tiêu đề Giới Thiệu (About)</label>
+                  <label className="field-label">
+                    Tiêu đề Giới Thiệu (About)
+                  </label>
                   <input
                     className="f-input"
                     type="text"
                     value={configs.about_title || ""}
-                    onChange={(e) => setConfigs({ ...configs, about_title: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, about_title: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Mô tả Giới thiệu (About)</label>
+                  <label className="field-label">
+                    Mô tả Giới thiệu (About)
+                  </label>
                   <textarea
                     className="f-textarea"
                     value={configs.about_desc || ""}
-                    onChange={(e) => setConfigs({ ...configs, about_desc: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, about_desc: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1617,7 +2061,9 @@ export default function AdminPanel() {
                   <textarea
                     className="f-textarea"
                     value={configs.cta_title || ""}
-                    onChange={(e) => setConfigs({ ...configs, cta_title: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, cta_title: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1626,7 +2072,9 @@ export default function AdminPanel() {
                   <textarea
                     className="f-textarea"
                     value={configs.cta_desc || ""}
-                    onChange={(e) => setConfigs({ ...configs, cta_desc: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, cta_desc: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -1636,23 +2084,41 @@ export default function AdminPanel() {
                     className="f-input"
                     type="text"
                     value={configs.cta_btn || ""}
-                    onChange={(e) => setConfigs({ ...configs, cta_btn: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, cta_btn: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="field-row">
-                  <label className="field-label">Mô Tả Chân Trang (Footer)</label>
+                  <label className="field-label">
+                    Mô Tả Chân Trang (Footer)
+                  </label>
                   <textarea
                     className="f-textarea"
                     value={configs.footer_desc || ""}
-                    onChange={(e) => setConfigs({ ...configs, footer_desc: e.target.value })}
+                    onChange={(e) =>
+                      setConfigs({ ...configs, footer_desc: e.target.value })
+                    }
                     required
                   />
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.5rem" }}>
-                  <button type="submit" className="btn-save-all" disabled={isSavingConfigs}>
-                    {isSavingConfigs ? "⏳ ĐANG LƯU CẤU HÌNH..." : "💾 LƯU CẤU HÌNH"}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: "1.5rem",
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="btn-save-all"
+                    disabled={isSavingConfigs}
+                  >
+                    {isSavingConfigs
+                      ? "⏳ ĐANG LƯU CẤU HÌNH..."
+                      : "💾 LƯU CẤU HÌNH"}
                   </button>
                 </div>
               </form>
@@ -1665,7 +2131,9 @@ export default function AdminPanel() {
           <div className="tab-panel active">
             <div className="panel">
               <div className="panel-head">
-                <div className="panel-title">💼 Danh Sách Hồ Sơ Ứng Tuyển Thợ</div>
+                <div className="panel-title">
+                  💼 Danh Sách Hồ Sơ Ứng Tuyển Thợ
+                </div>
                 <div style={{ display: "flex", gap: ".7rem" }}>
                   <button className="btn-refresh" onClick={loadRecruitment}>
                     🔄 Làm Mới
@@ -1690,7 +2158,9 @@ export default function AdminPanel() {
                     <tbody>
                       {recruitmentList.map((row) => (
                         <tr key={row.id}>
-                          <td>{new Date(row.created_at).toLocaleString("vi-VN")}</td>
+                          <td>
+                            {new Date(row.created_at).toLocaleString("vi-VN")}
+                          </td>
                           <td className="td-title">{row.name}</td>
                           <td>{row.phone}</td>
                           <td>
@@ -1698,7 +2168,10 @@ export default function AdminPanel() {
                           </td>
                           <td>{row.experience || "—"}</td>
                           <td>
-                            <button className="btn-del" onClick={() => deleteRecruit(row.id)}>
+                            <button
+                              className="btn-del"
+                              onClick={() => deleteRecruit(row.id)}
+                            >
                               🗑️ Xóa
                             </button>
                           </td>
@@ -1706,7 +2179,10 @@ export default function AdminPanel() {
                       ))}
                       {recruitmentList.length === 0 && (
                         <tr>
-                          <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
+                          <td
+                            colSpan="6"
+                            style={{ textAlign: "center", padding: "2rem" }}
+                          >
                             Chưa có hồ sơ ứng tuyển nào.
                           </td>
                         </tr>
@@ -1724,7 +2200,9 @@ export default function AdminPanel() {
           <div className="tab-panel active">
             <div className="panel">
               <div className="panel-head">
-                <div className="panel-title">🎮 Quản Lý Album Ảnh Mô Phỏng Phòng 3D</div>
+                <div className="panel-title">
+                  🎮 Quản Lý Album Ảnh Mô Phỏng Phòng 3D
+                </div>
                 <div style={{ display: "flex", gap: ".7rem" }}>
                   <button className="btn-refresh" onClick={loadSimulator}>
                     🔄 Làm Mới
@@ -1760,26 +2238,53 @@ export default function AdminPanel() {
                     </thead>
                     <tbody>
                       {simulatorItems.map((item) => {
-                        const imagesList = item.image ? item.image.split("|").filter(Boolean) : [];
+                        const imagesList = item.image
+                          ? item.image.split("|").filter(Boolean)
+                          : [];
                         return (
                           <tr key={item.id}>
                             <td>
-                              <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap", maxWidth: "300px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "0.3rem",
+                                  flexWrap: "wrap",
+                                  maxWidth: "300px",
+                                }}
+                              >
                                 {imagesList.map((imgUrl, imgIdx) => (
                                   <img
                                     key={imgIdx}
                                     src={imgUrl}
                                     alt=""
-                                    style={{ width: "50px", height: "40px", borderRadius: "4px", objectFit: "cover" }}
-                                    onError={(e) => (e.target.style.display = "none")}
+                                    style={{
+                                      width: "50px",
+                                      height: "40px",
+                                      borderRadius: "4px",
+                                      objectFit: "cover",
+                                    }}
+                                    onError={(e) =>
+                                      (e.target.style.display = "none")
+                                    }
                                   />
                                 ))}
-                                {imagesList.length === 0 && <span style={{ color: "var(--muted)" }}>Chưa tải ảnh</span>}
+                                {imagesList.length === 0 && (
+                                  <span style={{ color: "var(--muted)" }}>
+                                    Chưa tải ảnh
+                                  </span>
+                                )}
                               </div>
                             </td>
-                            <td className="td-title" style={{ fontSize: "1rem" }}>{item.room_name}</td>
+                            <td
+                              className="td-title"
+                              style={{ fontSize: "1rem" }}
+                            >
+                              {item.room_name}
+                            </td>
                             <td>
-                              <span className="cat-badge">{imagesList.length} ảnh</span>
+                              <span className="cat-badge">
+                                {imagesList.length} ảnh
+                              </span>
                             </td>
                             <td>
                               <div className="action-row">
@@ -1806,8 +2311,12 @@ export default function AdminPanel() {
                       })}
                       {simulatorItems.length === 0 && (
                         <tr>
-                          <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
-                            Chưa có phòng 3D nào được cấu hình ảnh. Hãy bấm "Tải Ảnh Phòng 3D" để bắt đầu!
+                          <td
+                            colSpan="4"
+                            style={{ textAlign: "center", padding: "2rem" }}
+                          >
+                            Chưa có phòng 3D nào được cấu hình ảnh. Hãy bấm "Tải
+                            Ảnh Phòng 3D" để bắt đầu!
                           </td>
                         </tr>
                       )}
@@ -1821,7 +2330,7 @@ export default function AdminPanel() {
 
         {/* MODAL QUẢN LÝ QUẢN LÝ ẢNH GIẢ LẬP 3D (SIMULATOR) */}
         {showSimulatorModal && (
-          <div className="modal-bg open">
+          <div className="modal-bg open" style={MODAL_WRAPPER_STYLE}>
             <div className="modal">
               <button
                 className="modal-close"
@@ -1832,17 +2341,26 @@ export default function AdminPanel() {
               <div className="modal-title">🎮 Cấu Hình Album Ảnh Phòng 3D</div>
               <form onSubmit={saveSimulator}>
                 <div className="mf-field">
-                  <label className="mf-label">Không Gian Phòng Cần Cấu Hình *</label>
+                  <label className="mf-label">
+                    Không Gian Phòng Cần Cấu Hình *
+                  </label>
                   <select
                     className="mf-select"
                     value={simulatorForm.room_name}
-                    onChange={(e) => setSimulatorForm({ ...simulatorForm, room_name: e.target.value })}
+                    onChange={(e) =>
+                      setSimulatorForm({
+                        ...simulatorForm,
+                        room_name: e.target.value,
+                      })
+                    }
                     required
-                    disabled={!!simulatorForm.id} 
+                    disabled={!!simulatorForm.id}
                   >
                     <option value="">-- Chọn không gian phòng mẫu --</option>
                     {SIMULATOR_ROOMS.map((room, idx) => (
-                      <option key={idx} value={room}>{room}</option>
+                      <option key={idx} value={room}>
+                        {room}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1850,26 +2368,75 @@ export default function AdminPanel() {
                 {/* Lưới ảnh hiện có của phòng giả lập này */}
                 {simulatorForm.image && (
                   <div className="mf-field">
-                    <label className="mf-label">Ảnh Album Hiện Có (Bấm ✕ để xóa từng ảnh)</label>
-                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", background: "var(--c3)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--line)" }}>
-                      {simulatorForm.image.split("|").filter(Boolean).map((imgUrl, idx) => (
-                        <div key={idx} style={{ position: "relative", width: "70px", height: "60px" }}>
-                          <img src={imgUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "4px" }} />
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSimSubImage(idx)}
-                            style={{ position: "absolute", top: "-5px", right: "-5px", width: "18px", height: "18px", borderRadius: "50%", background: "var(--red)", color: "white", border: "none", fontSize: "10px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                    <label className="mf-label">
+                      Ảnh Album Hiện Có (Bấm ✕ để xóa từng ảnh)
+                    </label>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "0.5rem",
+                        flexWrap: "wrap",
+                        background: "var(--c3)",
+                        padding: "1rem",
+                        borderRadius: "8px",
+                        border: "1px solid var(--line)",
+                      }}
+                    >
+                      {simulatorForm.image
+                        .split("|")
+                        .filter(Boolean)
+                        .map((imgUrl, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              position: "relative",
+                              width: "70px",
+                              height: "60px",
+                            }}
                           >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+                            <img
+                              src={imgUrl}
+                              alt=""
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                borderRadius: "4px",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSimSubImage(idx)}
+                              style={{
+                                position: "absolute",
+                                top: "-5px",
+                                right: "-5px",
+                                width: "18px",
+                                height: "18px",
+                                borderRadius: "50%",
+                                background: "var(--red)",
+                                color: "white",
+                                border: "none",
+                                fontSize: "10px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                cursor: "pointer",
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 )}
 
                 <div className="mf-field">
-                  <label className="mf-label">Chọn thêm ảnh trần thạch cao thực tế (Cho phép chọn nhiều ảnh mới)</label>
+                  <label className="mf-label">
+                    Chọn thêm ảnh trần thạch cao thực tế (Cho phép chọn nhiều
+                    ảnh mới)
+                  </label>
                   <input
                     className="mf-input"
                     type="file"
@@ -1877,7 +2444,11 @@ export default function AdminPanel() {
                     accept="image/*"
                     onChange={handleFileChange}
                   />
-                  <div className="img-hint">Ảnh sau khi tải lên sẽ được hiển thị dạng slide lướt Trái/Phải ngoài khu vực mô phỏng 3D trang chủ ứng với từng phòng.</div>
+                  <div className="img-hint">
+                    Ảnh sau khi tải lên sẽ được hiển thị dạng slide lướt
+                    Trái/Phải ngoài khu vực mô phỏng 3D trang chủ ứng với từng
+                    phòng.
+                  </div>
                   {selectedFiles.length > 0 && (
                     <p style={{ color: "var(--accent)", marginTop: "0.5rem" }}>
                       📂 Đã chọn thêm {selectedFiles.length} ảnh mới để tải lên.
@@ -1898,7 +2469,9 @@ export default function AdminPanel() {
                     type="submit"
                     disabled={isSavingSimulator}
                   >
-                    {isSavingSimulator ? "⏳ ĐANG LƯU..." : "💾 LƯU ALBUM PHÒNG"}
+                    {isSavingSimulator
+                      ? "⏳ ĐANG LƯU..."
+                      : "💾 LƯU ALBUM PHÒNG"}
                   </button>
                 </div>
               </form>
@@ -1906,6 +2479,532 @@ export default function AdminPanel() {
           </div>
         )}
       </div>
+
+      {/* GALLERY MODAL */}
+      {showGalleryModal && (
+        <div className="modal-bg open" style={MODAL_WRAPPER_STYLE}>
+          <div className="modal">
+            <button
+              className="modal-close"
+              onClick={() => setShowGalleryModal(false)}
+            >
+              ✕
+            </button>
+            <div className="modal-title">
+              {galleryForm.id
+                ? "✏️ Sửa Album Công Trình"
+                : "Thêm Công Trình Mới"}
+            </div>
+            <form onSubmit={saveGallery}>
+              <div className="mf-row">
+                <div className="mf-field">
+                  <label className="mf-label">Tiêu Đề *</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    value={galleryForm.title}
+                    onChange={(e) =>
+                      setGalleryForm({ ...galleryForm, title: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="mf-field">
+                  <label className="mf-label">Danh Mục *</label>
+                  <select
+                    className="mf-select"
+                    value={galleryForm.category}
+                    onChange={(e) =>
+                      setGalleryForm({
+                        ...galleryForm,
+                        category: e.target.value,
+                      })
+                    }
+                    required
+                  >
+                    <option value="">-- Chọn --</option>
+                    <option value="Căn Hộ">Căn Hộ</option>
+                    <option value="Văn Phòng">Văn Phòng</option>
+                    <option value="Biệt Thự">Biệt Thự</option>
+                    <option value="Khách Sạn">Khách Sạn</option>
+                    <option value="Thương Mại">Thương Mại</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mf-row">
+                <div className="mf-field">
+                  <label className="mf-label">Địa Điểm</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    value={galleryForm.location}
+                    onChange={(e) =>
+                      setGalleryForm({
+                        ...galleryForm,
+                        location: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="mf-field">
+                  <label className="mf-label">Diện Tích</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    value={galleryForm.size}
+                    onChange={(e) =>
+                      setGalleryForm({ ...galleryForm, size: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Album ảnh hiện tại */}
+              {galleryForm.image && (
+                <div className="mf-field">
+                  <label className="mf-label">
+                    Album Ảnh Hiện Có (Bấm ✕ để xóa từng ảnh)
+                  </label>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "0.5rem",
+                      flexWrap: "wrap",
+                      background: "var(--c3)",
+                      padding: "1rem",
+                      borderRadius: "8px",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
+                    {galleryForm.image
+                      .split("|")
+                      .filter(Boolean)
+                      .map((imgUrl, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            position: "relative",
+                            width: "70px",
+                            height: "60px",
+                          }}
+                        >
+                          <img
+                            src={imgUrl}
+                            alt=""
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: "4px",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSubImage(idx)}
+                            style={{
+                              position: "absolute",
+                              top: "-5px",
+                              right: "-5px",
+                              width: "18px",
+                              height: "18px",
+                              borderRadius: "50%",
+                              background: "var(--red)",
+                              color: "white",
+                              border: "none",
+                              fontSize: "10px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mf-field">
+                <label className="mf-label">
+                  Tải Thêm Ảnh Mới (Chọn nhiều ảnh mới để cộng dồn vào Album)
+                </label>
+                <input
+                  className="mf-input"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                <div className="img-hint">
+                  Hệ thống nén tự động mượt mà và lưu trữ công khai an toàn trực
+                  tiếp trên Supabase Storage.
+                </div>
+                {selectedFiles.length > 0 && (
+                  <p style={{ color: "var(--accent)", marginTop: "0.5rem" }}>
+                    📂 Đã chọn thêm {selectedFiles.length} ảnh mới để tải lên.
+                  </p>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn-cancel"
+                  type="button"
+                  onClick={() => setShowGalleryModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="btn-modal-save"
+                  type="submit"
+                  disabled={isSavingGallery}
+                >
+                  {isSavingGallery ? "⏳ ĐANG LƯU..." : "💾 LƯU CÔNG TRÌNH"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* REVIEWS MODAL */}
+      {showReviewModal && (
+        <div className="modal-bg open" style={MODAL_WRAPPER_STYLE}>
+          <div className="modal">
+            <button
+              className="modal-close"
+              onClick={() => setShowReviewModal(false)}
+            >
+              ✕
+            </button>
+            <div className="modal-title">⭐ Cập Nhật Đánh Giá</div>
+            <form onSubmit={saveReview}>
+              <div className="mf-row">
+                <div className="mf-field">
+                  <label className="mf-label">Khách Hàng *</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    value={reviewForm.name}
+                    onChange={(e) =>
+                      setReviewForm({ ...reviewForm, name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="mf-field">
+                  <label className="mf-label">Chức Vụ / Vị Trí</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    value={reviewForm.role}
+                    onChange={(e) =>
+                      setReviewForm({ ...reviewForm, role: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="mf-row">
+                <div className="mf-field">
+                  <label className="mf-label">Tên Dự Án</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    value={reviewForm.project}
+                    onChange={(e) =>
+                      setReviewForm({ ...reviewForm, project: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="mf-field">
+                  <label className="mf-label">Số Sao Đánh Giá</label>
+                  <select
+                    className="mf-select"
+                    value={reviewForm.stars}
+                    onChange={(e) =>
+                      setReviewForm({
+                        ...reviewForm,
+                        stars: Number(e.target.value),
+                      })
+                    }
+                  >
+                    <option value={5}>⭐⭐⭐⭐⭐ 5 Sao</option>
+                    <option value={4}>⭐⭐⭐⭐ 4 Sao</option>
+                    <option value={3}>⭐⭐⭐ 3 Sao</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Avatar khách hàng */}
+              <div className="mf-field">
+                <label className="mf-label">
+                  Ảnh đại diện Khách hàng (Avatar)
+                </label>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+                >
+                  <div
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "50%",
+                      background: "var(--c3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
+                    {selectedAvatarFile ? (
+                      <img
+                        src={URL.createObjectURL(selectedAvatarFile)}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : reviewForm.avatar ? (
+                      <img
+                        src={reviewForm.avatar}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: "1rem" }}>👤</span>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    style={{ flex: 1 }}
+                  />
+                </div>
+              </div>
+
+              <div className="mf-field">
+                <label className="mf-label">Nội Dung Đánh Giá *</label>
+                <textarea
+                  className="mf-textarea"
+                  value={reviewForm.text}
+                  onChange={(e) =>
+                    setReviewForm({ ...reviewForm, text: e.target.value })
+                  }
+                  required
+                ></textarea>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn-cancel"
+                  type="button"
+                  onClick={() => setShowReviewModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="btn-modal-save"
+                  type="submit"
+                  disabled={isSavingReview}
+                >
+                  💾 LƯU ĐÁNH GIÁ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MATERIALS MODAL (Có sườn chọn Icon xây dựng mẫu sẵn) */}
+      {showMaterialModal && (
+        <div className="modal-bg open" style={MODAL_WRAPPER_STYLE}>
+          <div className="modal">
+            <button
+              className="modal-close"
+              onClick={() => setShowMaterialModal(false)}
+            >
+              ✕
+            </button>
+            <div className="modal-title">
+              {materialForm.id ? "✏️ Sửa Vật Liệu" : "Thêm Vật Liệu Mới"}
+            </div>
+            <form onSubmit={saveMaterial}>
+              <div className="mf-row">
+                <div className="mf-field">
+                  <label className="mf-label">Hãng Sản Xuất / Brand *</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    placeholder="VD: Knauf · USG"
+                    value={materialForm.brand}
+                    onChange={(e) =>
+                      setMaterialForm({
+                        ...materialForm,
+                        brand: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+                <div className="mf-field">
+                  <label className="mf-label">Tên Vật Liệu *</label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    placeholder="VD: Tấm Thạch Cao Chống Ẩm"
+                    value={materialForm.name}
+                    onChange={(e) =>
+                      setMaterialForm({ ...materialForm, name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mf-row">
+                <div className="mf-field">
+                  <label className="mf-label">
+                    Nhãn (Phân tách bằng dấu '|')
+                  </label>
+                  <input
+                    className="mf-input"
+                    type="text"
+                    placeholder="VD: Chống Ẩm|12mm|Màu Xanh"
+                    value={materialForm.tags}
+                    onChange={(e) =>
+                      setMaterialForm({ ...materialForm, tags: e.target.value })
+                    }
+                  />
+                </div>
+                {/* Bộ chọn Icon Emoji thạch cao/xây dựng mẫu sẵn nhanh gọn */}
+                <div className="mf-field">
+                  <label className="mf-label">Icon đại diện vật liệu *</label>
+                  <select
+                    className="mf-select"
+                    value={materialForm.icon}
+                    onChange={(e) =>
+                      setMaterialForm({ ...materialForm, icon: e.target.value })
+                    }
+                    required
+                  >
+                    <option value="">-- Chọn Icon có sẵn --</option>
+                    <option value="🧱">🧱 Tấm thạch cao / Tường</option>
+                    <option value="💧">💧 Chống ẩm / Giọt nước</option>
+                    <option value="🔥">🔥 Chống cháy / Lửa</option>
+                    <option value="🔩">🔩 Khung thép / Ốc vít</option>
+                    <option value="🌡️">🌡️ Cách âm / Cách nhiệt</option>
+                    <option value="🎨">🎨 Sơn nước / Bột bả</option>
+                    <option value="🔧">🔧 Phụ kiện / Dụng cụ</option>
+                    <option value="🚚">🚚 Vận chuyển / Giao hàng</option>
+                    <option value="🏠">🏠 Nhà ở / Văn phòng</option>
+                    <option value="🏗️">🏗️ Công trình / Thiết kế</option>
+                    <option value="📐">📐 Kỹ thuật / Thước đo</option>
+                    <option value="⚡">⚡ Tín hiệu / Sét</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mf-field">
+                <label className="mf-label">Mô Tả Sản Phẩm *</label>
+                <textarea
+                  className="mf-textarea"
+                  value={materialForm.desc}
+                  onChange={(e) =>
+                    setMaterialForm({ ...materialForm, desc: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn-cancel"
+                  type="button"
+                  onClick={() => setShowMaterialModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="btn-modal-save"
+                  type="submit"
+                  disabled={isSavingMaterial}
+                >
+                  💾 LƯU VẬT LIỆU
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ĐỔI MẬT KHẨU QUẢN TRỊ */}
+      {showPasswordModal && (
+        <div className="modal-bg open" style={MODAL_WRAPPER_STYLE}>
+          <div className="modal">
+            <button
+              className="modal-close"
+              onClick={() => setShowPasswordModal(false)}
+            >
+              ✕
+            </button>
+            <div className="modal-title">🔑 Đổi Mật Khẩu Quản Trị</div>
+            <form onSubmit={handleChangePassword}>
+              <div className="mf-field">
+                <label className="mf-label">Mật khẩu mới *</label>
+                <input
+                  className="mf-input"
+                  type="password"
+                  placeholder="Tối thiểu 6 ký tự"
+                  value={passwordForm.new_password}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      new_password: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="mf-field">
+                <label className="mf-label">Xác nhận mật khẩu mới *</label>
+                <input
+                  className="mf-input"
+                  type="password"
+                  placeholder="Nhập lại mật khẩu mới"
+                  value={passwordForm.confirm_password}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      confirm_password: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="modal-footer" style={{ marginTop: "2rem" }}>
+                <button
+                  className="btn-cancel"
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="btn-modal-save"
+                  type="submit"
+                  disabled={isSavingPassword}
+                >
+                  {isSavingPassword ? "⏳ ĐANG LƯU..." : "💾 LƯU MẬT KHẨU"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
