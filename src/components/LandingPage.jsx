@@ -118,6 +118,7 @@ const GALLERY_LIMIT = 6; // 3 cột x 2 hàng
 const REVIEWS_LIMIT = 3; // 3 cột x 1 hàng
 
 // AN TOÀN TUYỆT ĐỐI: Tách toàn bộ CSS tùy biến ra khỏi mã JSX để tránh lỗi biên dịch của Vite
+// AN TOÀN TUYỆT ĐỐI: Tách toàn bộ CSS tùy biến ra khỏi mã JSX để tránh lỗi biên dịch của Vite
 const INLINE_CSS = `
   .nav-center a.active {
     color: var(--accent) !important;
@@ -200,8 +201,12 @@ const INLINE_CSS = `
     border-radius: 12px;
   }
 
-  /* NÂNG CẤP RESPONSIVE DI ĐỘNG: Căn giữa tuyệt đối các thẻ thống kê và vạch vàng trang trí */
+  /* NÂNG CẤP RESPONSIVE DI ĐỘNG: Tạo khoảng đệm đẩy nút Cuộn Xuống sát đáy, không lo đè chữ */
   @media (max-width: 1024px) {
+    /* Tăng mạnh khoảng đệm dưới của khung hình Hero để chừa chỗ trống cho nút cuộn */
+    .hero {
+      padding-bottom: 11rem !important; 
+    }
     .hero-right {
       display: flex !important;
       flex-direction: column !important;
@@ -210,6 +215,7 @@ const INLINE_CSS = `
       width: 100% !important;
       margin: 2rem auto 0 !important;
       gap: 1.2rem !important;
+      margin-bottom: 2rem !important; /* Đẩy chân các ô thống kê lên */
     }
     .stat-box {
       width: 100% !important;
@@ -218,20 +224,23 @@ const INLINE_CSS = `
       padding: 1.2rem 1.5rem !important;
       height: auto !important;
     }
-    /* SỬA LỖI ĐÈ CHỮ: Giãn khoảng cách dòng chữ nhãn thống kê luôn vuông vắn dễ đọc */
+    /* Sửa khoảng cách giãn dòng chữ nhãn thống kê trên di động */
     .stat-lbl {
       line-height: 1.5 !important;
       text-align: center !important;
       display: block !important;
       font-size: 0.8rem !important;
     }
-    /* Căn giữa vạch chỉ hướng vàng trên di động */
+    /* KHÔI PHỤC & CĂN CHỈNH: Căn giữa và đẩy sâu nút cuộn xuống đáy */
     .scroll-ind {
+      display: flex !important;
+      position: absolute !important;
+      bottom: 2rem !important; /* Đặt sát mép đáy */
       left: 50% !important;
       transform: translateX(-50%) !important;
-      display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
+      z-index: 50 !important;
     }
   }
 `;
