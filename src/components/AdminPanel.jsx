@@ -1,23 +1,7 @@
+// src/components/AdminPanel.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import "../AdminPanel.css"; // Đã kết nối với file CSS riêng biệt
-
-// --- ĐỊNH NGHĨA STYLE CHO MODAL (SỬA LỖI MÀN HÌNH ĐEN) ---
-const MODAL_WRAPPER_STYLE = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100vw",
-  height: "100vh",
-  backgroundColor: "rgba(0, 0, 0, 0.75)",
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "center",
-  zIndex: 9999,
-  overflowY: "auto",
-  padding: "40px 20px",
-  backdropFilter: "blur(4px)"
-};
 
 const DEFAULT_MATERIALS = [
   {
@@ -209,7 +193,7 @@ export default function AdminPanel() {
     size: "",
     image: "",
   });
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [selectedGalleryFiles, setSelectedGalleryFiles] = useState([]); // Đã tách riêng biệt
   const [isSavingGallery, setIsSavingGallery] = useState(false);
 
   // Quản lý Đánh giá (Reviews)
@@ -293,6 +277,7 @@ export default function AdminPanel() {
     room_name: "",
     image: "",
   });
+  const [selectedSimulatorFiles, setSelectedSimulatorFiles] = useState([]); // Đã tách riêng biệt
   const [isSavingSimulator, setIsSavingSimulator] = useState(false);
 
   useEffect(() => {
@@ -346,9 +331,16 @@ export default function AdminPanel() {
     setLoginError(false);
     try {
       const isEmailFormat = emailInput.includes("@");
+      
+      // Hỗ trợ định dạng SĐT chuẩn Việt Nam sang chuẩn quốc tế của Supabase
+      let formattedUser = emailInput.trim();
+      if (!isEmailFormat && formattedUser.startsWith("0")) {
+        formattedUser = "+84" + formattedUser.slice(1);
+      }
+
       const credentials = isEmailFormat
-        ? { email: emailInput, password: passwordInput }
-        : { phone: emailInput, password: passwordInput };
+        ? { email: formattedUser, password: passwordInput }
+        : { phone: formattedUser, password: passwordInput };
 
       const { data, error } = await supabase.auth.signInWithPassword(
         credentials
@@ -424,7 +416,7 @@ export default function AdminPanel() {
 
   const handleFileChange = (e) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+      setSelectedGalleryFiles(Array.from(e.target.files));
     }
   };
 
@@ -437,11 +429,14 @@ export default function AdminPanel() {
     setIsSavingGallery(true);
     try {
       const uploadedUrls = [];
-      for (const file of selectedFiles) {
+      let index = 0;
+      for (const file of selectedGalleryFiles) {
         const comp = await compressImage(file, 1200);
         const blob = base64ToBlob(comp.base64, "image/jpeg");
         const cleanName = sanitizeFilename(comp.filename);
-        const filePath = `gallery/${Date.now()}_${cleanName}`;
+        // Sửa lỗi trùng tên file khi up hàng loạt bằng cách thêm index và chuỗi ngẫu nhiên
+        const randStr = Math.random().toString(36).substring(2, 7);
+        const filePath = `gallery/${Date.now()}_${index}_${randStr}_${cleanName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("portfolio")
@@ -454,6 +449,7 @@ export default function AdminPanel() {
         } = supabase.storage.from("portfolio").getPublicUrl(filePath);
 
         uploadedUrls.push(publicUrl);
+        index++;
       }
 
       const currentImagesList = galleryForm.image
@@ -463,8 +459,9 @@ export default function AdminPanel() {
         "|"
       );
 
+      const randId = Math.random().toString(36).substring(2, 7);
       const { error } = await supabase.from("gallery").upsert({
-        id: galleryForm.id || "CT" + Date.now(),
+        id: galleryForm.id || "CT" + Date.now() + "_" + randId,
         title: galleryForm.title,
         category: galleryForm.category,
         location: galleryForm.location,
@@ -475,7 +472,7 @@ export default function AdminPanel() {
       if (error) throw error;
 
       setShowGalleryModal(false);
-      setSelectedFiles([]);
+      setSelectedGalleryFiles([]);
       loadGallery();
       alert("Lưu công trình thành công!");
     } catch (err) {
@@ -519,7 +516,7 @@ export default function AdminPanel() {
         return edited ? edited : def;
       });
       const newlyAdded = dbReviews.filter(
-        (db) => !DEFAULT_REVIEWS.some((def) => def.id === db.id)
+        (db) => !DEFAULT_REVIEWS.some((def) => def.id === def.id)
       );
       setReviews([...combined, ...newlyAdded]);
     } catch (err) {
@@ -561,7 +558,8 @@ export default function AdminPanel() {
         avatarUrl = publicUrl;
       }
 
-      const finalId = reviewForm.id || "RV" + Date.now();
+      const randId = Math.random().toString(36).substring(2, 7);
+      const finalId = reviewForm.id || "RV" + Date.now() + "_" + randId;
 
       const { error } = await supabase.from("reviews").upsert({
         ...reviewForm,
@@ -619,7 +617,8 @@ export default function AdminPanel() {
     }
     setIsSavingMaterial(true);
     try {
-      const finalId = materialForm.id || "MAT" + Date.now();
+      const randId = Math.random().toString(36).substring(2, 7);
+      const finalId = materialForm.id || "MAT" + Date.now() + "_" + randId;
       const { error } = await supabase.from("materials").upsert({
         ...materialForm,
         id: finalId,
@@ -764,6 +763,12 @@ export default function AdminPanel() {
     setLoadingSimulator(false);
   };
 
+  const handleSimulatorFileChange = (e) => {
+    if (e.target.files) {
+      setSelectedSimulatorFiles(Array.from(e.target.files));
+    }
+  };
+
   const saveSimulator = async (e) => {
     e.preventDefault();
     if (!simulatorForm.room_name) {
@@ -773,11 +778,13 @@ export default function AdminPanel() {
     setIsSavingSimulator(true);
     try {
       const uploadedUrls = [];
-      for (const file of selectedFiles) {
+      let index = 0;
+      for (const file of selectedSimulatorFiles) {
         const comp = await compressImage(file, 1200);
         const blob = base64ToBlob(comp.base64, "image/jpeg");
         const cleanName = sanitizeFilename(comp.filename);
-        const filePath = `simulator/${Date.now()}_${cleanName}`;
+        const randStr = Math.random().toString(36).substring(2, 7);
+        const filePath = `simulator/${Date.now()}_${index}_${randStr}_${cleanName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("portfolio")
@@ -790,6 +797,7 @@ export default function AdminPanel() {
         } = supabase.storage.from("portfolio").getPublicUrl(filePath);
 
         uploadedUrls.push(publicUrl);
+        index++;
       }
 
       const currentImagesList = simulatorForm.image
@@ -803,15 +811,15 @@ export default function AdminPanel() {
         simulatorForm.id || sanitizeFilename(simulatorForm.room_name);
 
       const { error } = await supabase.from("simulator").upsert({
-        ...simulatorForm,
         id: cleanId,
+        room_name: simulatorForm.room_name,
         image: finalImageString,
       });
 
       if (error) throw error;
 
       setShowSimulatorModal(false);
-      setSelectedFiles([]);
+      setSelectedSimulatorFiles([]);
       loadSimulator();
       alert("Cập nhật album ảnh phòng 3D thành công!");
     } catch (err) {
@@ -899,8 +907,8 @@ export default function AdminPanel() {
           <div className="login-sub">Nhập tài khoản & mật khẩu để tiếp tục</div>
           <input
             className="login-input"
-            type="email"
-            placeholder="admin@thachpro.vn"
+            type="text"
+            placeholder="admin@thachpro.vn hoặc Số điện thoại"
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
             style={{
@@ -950,7 +958,7 @@ export default function AdminPanel() {
           </button>
           {loginError && (
             <div className="login-error" style={{ marginTop: "1rem" }}>
-              ❌ Email hoặc Mật khẩu không chính xác!
+              ❌ Email/SĐT hoặc Mật khẩu không chính xác!
             </div>
           )}
         </div>
@@ -1049,791 +1057,510 @@ export default function AdminPanel() {
       </div>
 
       <div className="content">
-        <div className="stats-row">
-          <div
-            className="stat-card"
-            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
-          >
-            <div className="stat-ico">🖼️</div>
-            <div>
-              <div className="stat-num">{galleryItems.length}</div>
-              <div className="stat-lbl">Công trình đã đăng</div>
-            </div>
-          </div>
-          <div
-            className="stat-card"
-            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
-          >
-            <div className="stat-ico">⭐</div>
-            <div>
-              <div className="stat-num">{reviews.length}</div>
-              <div className="stat-lbl">Đánh giá khách hàng</div>
-            </div>
-          </div>
-          <div
-            className="stat-card"
-            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
-          >
-            <div className="stat-ico">📦</div>
-            <div>
-              <div className="stat-num">{materials.length}</div>
-              <div className="stat-lbl">Vật liệu thi công</div>
-            </div>
-          </div>
-          <div
-            className="stat-card"
-            style={{ boxShadow: "0 0 10px rgba(232,160,32,0.1)" }}
-          >
-            <div className="stat-ico">🎮</div>
-            <div>
-              <div className="stat-num">{simulatorItems.length}</div>
-              <div className="stat-lbl">Phòng giả lập 3D</div>
-            </div>
-          </div>
-        </div>
-
+        {/* --- TAB GALLERY --- */}
         {activeTab === "gallery" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">Danh Sách Công Trình</div>
-                <div style={{ display: "flex", gap: ".7rem" }}>
-                  <button className="btn-refresh" onClick={loadGallery}>
-                    🔄 Làm Mới
-                  </button>
-                  <button
-                    className="btn-add"
-                    onClick={() => {
-                      setGalleryForm({
-                        id: "",
-                        title: "",
-                        category: "",
-                        location: "",
-                        size: "",
-                        image: "",
-                      });
-                      setSelectedFiles([]);
-                      setShowGalleryModal(true);
-                    }}
-                  >
-                    ＋ Thêm Công Trình
-                  </button>
-                </div>
-              </div>
-              <div className="table-wrap">
-                {loadingGallery ? (
-                  <div className="table-loading">⏳ Đang tải...</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Album Ảnh</th>
-                        <th>Tiêu Đề</th>
-                        <th>Danh Mục</th>
-                        <th>Địa Điểm</th>
-                        <th>Diện Tích</th>
-                        <th>Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {galleryItems.map((item) => {
-                        const imagesList = item.image
-                          ? item.image.split("|").filter(Boolean)
-                          : [];
-                        return (
-                          <tr key={item.id}>
-                            <td>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "0.3rem",
-                                  flexWrap: "wrap",
-                                  maxWidth: "200px",
-                                }}
-                              >
-                                {imagesList.map((imgUrl, imgIdx) => (
-                                  <img
-                                    key={imgIdx}
-                                    className="td-img"
-                                    src={imgUrl}
-                                    alt=""
-                                    style={{
-                                      width: "40px",
-                                      height: "35px",
-                                      borderRadius: "4px",
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            </td>
-                            <td className="td-title">{item.title}</td>
-                            <td>
-                              <span className="cat-badge">{item.category}</span>
-                            </td>
-                            <td>{item.location || "—"}</td>
-                            <td>{item.size || "—"}</td>
-                            <td>
-                              <div className="action-row">
-                                <button
-                                  className="btn-edit"
-                                  onClick={() => {
-                                    setGalleryForm(item);
-                                    setSelectedFiles([]);
-                                    setShowGalleryModal(true);
-                                  }}
-                                >
-                                  ✏️ Sửa Album
-                                </button>
-                                <button
-                                  className="btn-del"
-                                  onClick={() => deleteGallery(item.id)}
-                                >
-                                  🗑️
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+          <div>
+            <div className="section-header">
+              <h2>🖼️ Quản Lý Danh Mục Công Trình</h2>
+              <button
+                className="add-btn"
+                onClick={() => {
+                  setGalleryForm({ id: "", title: "", category: "Trần thạch cao phòng khách", location: "", size: "", image: "" });
+                  setSelectedGalleryFiles([]);
+                  setShowGalleryModal(true);
+                }}
+              >
+                + Thêm Công Trình Mới
+              </button>
             </div>
-          </div>
-        )}
 
-        {activeTab === "reviews" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">
-                  ⭐ Quản Lý Đánh Giá Khách Hàng
-                </div>
-                <div style={{ display: "flex", gap: ".7rem" }}>
-                  <button className="btn-refresh" onClick={loadReviews}>
-                    🔄 Làm Mới
-                  </button>
-                  <button
-                    className="btn-add"
-                    onClick={() => {
-                      setReviewForm({
-                        id: "",
-                        name: "",
-                        role: "",
-                        project: "",
-                        stars: 5,
-                        text: "",
-                        avatar: "",
-                      });
-                      setSelectedAvatarFile(null);
-                      setShowReviewModal(true);
-                    }}
-                  >
-                    ＋ Thêm Đánh Giá
-                  </button>
-                </div>
-              </div>
-              <div className="table-wrap">
-                {loadingReviews ? (
-                  <div className="table-loading">⏳ Đang tải...</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Avatar</th>
-                        <th>Khách Hàng</th>
-                        <th>Chức Vụ</th>
-                        <th>Dự Án</th>
-                        <th>Số Sao</th>
-                        <th>Nội Dung</th>
-                        <th>Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reviews.map((item) => (
-                        <tr key={item.id}>
-                          <td>
-                            <div
-                              style={{
-                                width: "35px",
-                                height: "35px",
-                                borderRadius: "50%",
-                                background: "var(--c3)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                overflow: "hidden",
-                                border: "1px solid var(--line)",
-                              }}
-                            >
-                              {item.avatar ? (
-                                <img
-                                  src={item.avatar}
-                                  alt=""
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                  }}
-                                />
-                              ) : (
-                                <span
-                                  style={{
-                                    fontSize: "0.8rem",
-                                    fontWeight: "700",
-                                  }}
-                                >
-                                  {item.name
-                                    ? item.name.charAt(0).toUpperCase()
-                                    : "T"}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="td-title">{item.name}</td>
-                          <td>{item.role}</td>
-                          <td>{item.project}</td>
-                          <td>{item.stars} ⭐</td>
-                          <td
-                            style={{
-                              maxWidth: "300px",
-                              textOverflow: "ellipsis",
-                              overflow: "hidden",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {item.text}
-                          </td>
-                          <td>
-                            <div className="action-row">
-                              <button
-                                className="btn-edit"
-                                onClick={() => {
-                                  setReviewForm(item);
-                                  setSelectedAvatarFile(null);
-                                  setShowReviewModal(true);
-                                }}
-                              >
-                                ✏️ Sửa
-                              </button>
-                              <button
-                                className="btn-del"
-                                onClick={() => deleteReview(item.id)}
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "materials" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">📦 Quản Lý Danh Mục Vật Liệu</div>
-                <div style={{ display: "flex", gap: ".7rem" }}>
-                  <button className="btn-refresh" onClick={loadMaterials}>
-                    🔄 Làm Mới
-                  </button>
-                  <button
-                    className="btn-add"
-                    onClick={() => {
-                      setMaterialForm({
-                        id: "",
-                        brand: "",
-                        name: "",
-                        desc: "",
-                        tags: "",
-                        icon: "",
-                      });
-                      setShowMaterialModal(true);
-                    }}
-                  >
-                    ＋ Thêm Vật Liệu
-                  </button>
-                </div>
-              </div>
-              <div className="table-wrap">
-                {loadingMaterials ? (
-                  <div className="table-loading">⏳ Đang tải...</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Icon</th>
-                        <th>Hãng Vật Liệu</th>
-                        <th>Tên Vật Liệu</th>
-                        <th>Mô Tả</th>
-                        <th>Nhãn</th>
-                        <th>Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {materials.map((item) => (
-                        <tr key={item.id}>
-                          <td
-                            style={{ fontSize: "1.5rem", textAlign: "center" }}
-                          >
-                            {item.icon}
-                          </td>
-                          <td className="td-title">{item.brand}</td>
-                          <td>
-                            <strong>{item.name}</strong>
-                          </td>
-                          <td
-                            style={{
-                              maxWidth: "220px",
-                              textOverflow: "ellipsis",
-                              overflow: "hidden",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {item.desc}
-                          </td>
-                          <td>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "0.3rem",
-                                flexWrap: "wrap",
-                              }}
-                            >
-                              {item.tags &&
-                                item.tags.split("|").map((t, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="cat-badge"
-                                    style={{ fontSize: "0.65rem" }}
-                                  >
-                                    {t}
-                                  </span>
-                                ))}
-                            </div>
-                          </td>
-                          <td>
-                            <div className="action-row">
-                              <button
-                                className="btn-edit"
-                                onClick={() => {
-                                  setMaterialForm(item);
-                                  setShowMaterialModal(true);
-                                }}
-                              >
-                                ✏️ Sửa
-                              </button>
-                              <button
-                                className="btn-del"
-                                onClick={() => deleteMaterial(item.id)}
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "contacts" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">📋 Khách Hàng Gửi Liên Hệ</div>
-                <div style={{ display: "flex", gap: ".7rem" }}>
-                  <button className="btn-refresh" onClick={loadContacts}>
-                    🔄 Làm Mới
-                  </button>
-                </div>
-              </div>
-              <div className="table-wrap">
-                {loadingContacts ? (
-                  <div className="table-loading">⏳ Đang tải...</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Thời Gian</th>
-                        <th>Họ Tên</th>
-                        <th>SĐT</th>
-                        <th>Email</th>
-                        <th>Dịch Vụ</th>
-                        <th>Diện Tích</th>
-                        <th>Địa Điểm</th>
-                        <th>Ghi Chú</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {contacts.map((row) => (
-                        <tr key={row.id}>
-                          <td>
-                            {new Date(row.created_at).toLocaleString("vi-VN")}
-                          </td>
-                          <td className="td-title">{row.name}</td>
-                          <td>{row.phone}</td>
-                          <td>{row.email || "—"}</td>
-                          <td>
-                            <span className="cat-badge">
-                              {row.service || "—"}
-                            </span>
-                          </td>
-                          <td>{row.area || "—"}</td>
-                          <td>{row.address || "—"}</td>
-                          <td>{renderContactNote(row.note)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "simulator" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">
-                  🎮 Quản Lý Album Ảnh Mô Phỏng Phòng 3D
-                </div>
-                <div style={{ display: "flex", gap: ".7rem" }}>
-                  <button className="btn-refresh" onClick={loadSimulator}>
-                    🔄 Làm Mới
-                  </button>
-                  <button
-                    className="btn-add"
-                    onClick={() => {
-                      setSimulatorForm({
-                        id: "",
-                        room_name: "",
-                        image: "",
-                      });
-                      setSelectedFiles([]);
-                      setShowSimulatorModal(true);
-                    }}
-                  >
-                    ＋ Tải Ảnh Phòng 3D
-                  </button>
-                </div>
-              </div>
-              <div className="table-wrap">
-                {loadingSimulator ? (
-                  <div className="table-loading">⏳ Đang tải...</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Album Ảnh Giả Lập</th>
-                        <th>Không Gian Phòng</th>
-                        <th>Số lượng ảnh</th>
-                        <th>Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {simulatorItems.map((item) => {
-                        const imagesList = item.image
-                          ? item.image.split("|").filter(Boolean)
-                          : [];
-                        return (
-                          <tr key={item.id}>
-                            <td>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "0.3rem",
-                                  flexWrap: "wrap",
-                                  maxWidth: "300px",
-                                }}
-                              >
-                                {imagesList.map((imgUrl, imgIdx) => (
-                                  <img
-                                    key={imgIdx}
-                                    src={imgUrl}
-                                    alt=""
-                                    style={{
-                                      width: "50px",
-                                      height: "40px",
-                                      borderRadius: "4px",
-                                      objectFit: "cover",
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            </td>
-                            <td className="td-title">{item.room_name}</td>
-                            <td>
-                              <span className="cat-badge">
-                                {imagesList.length} ảnh
-                              </span>
-                            </td>
-                            <td>
-                              <div className="action-row">
-                                <button
-                                  className="btn-edit"
-                                  onClick={() => {
-                                    setSimulatorForm(item);
-                                    setSelectedFiles([]);
-                                    setShowSimulatorModal(true);
-                                  }}
-                                >
-                                  ✏️ Quản Lý Ảnh
-                                </button>
-                                <button
-                                  className="btn-del"
-                                  onClick={() => deleteSimulator(item.id)}
-                                >
-                                  🗑️
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "configs" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">
-                  ⚙️ Cấu Hình Thông Tin Chữ & Màu Sắc Giao Diện
-                </div>
-              </div>
-              <form onSubmit={saveConfigs} className="section-fields">
-                <div className="field-row">
-                  <label className="field-label">
-                    Tên Thương Hiệu (Logo Chữ)
-                  </label>
-                  <input
-                    className="f-input"
-                    type="text"
-                    value={configs.brand_name || ""}
-                    onChange={(e) =>
-                      setConfigs({ ...configs, brand_name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="field-row">
-                  <label className="field-label">Hotline Gọi Điện</label>
-                  <input
-                    className="f-input"
-                    type="text"
-                    value={configs.contact_phone || ""}
-                    onChange={(e) =>
-                      setConfigs({ ...configs, contact_phone: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                {/* ... (Các trường khác giữ nguyên như file của bạn) */}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.5rem" }}>
-                  <button type="submit" className="btn-save-all" disabled={isSavingConfigs}>
-                    {isSavingConfigs ? "⏳ ĐANG LƯU..." : "💾 LƯU CẤU HÌNH"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "recruitment" && (
-          <div className="tab-panel active">
-            <div className="panel">
-              <div className="panel-head">
-                <div className="panel-title">
-                  💼 Danh Sách Hồ Sơ Ứng Tuyển Thợ
-                </div>
-                <div style={{ display: "flex", gap: ".7rem" }}>
-                  <button className="btn-refresh" onClick={loadRecruitment}>
-                    🔄 Làm Mới
-                  </button>
-                </div>
-              </div>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Thời Gian</th>
-                      <th>Họ Tên</th>
-                      <th>SĐT</th>
-                      <th>Vị Trí</th>
-                      <th>Kinh Nghiệm</th>
-                      <th>Thao Tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recruitmentList.map((row) => (
-                      <tr key={row.id}>
-                        <td>{new Date(row.created_at).toLocaleString("vi-VN")}</td>
-                        <td>{row.name}</td>
-                        <td>{row.phone}</td>
-                        <td>{row.position}</td>
-                        <td>{row.experience}</td>
+            {loadingGallery ? <p>Đang tải dữ liệu...</p> : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Ảnh</th>
+                    <th>Tiêu đề</th>
+                    <th>Danh mục</th>
+                    <th>Vị trí / Diện tích</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {galleryItems.map((item) => {
+                    const firstImg = item.image ? item.image.split("|")[0] : "";
+                    return (
+                      <tr key={item.id}>
                         <td>
-                          <button className="btn-del" onClick={() => deleteRecruit(row.id)}>Xóa</button>
+                          {firstImg && <img src={firstImg} alt="" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "4px" }} />}
+                        </td>
+                        <td><strong>{item.title}</strong></td>
+                        <td><span className="badge">{item.category}</span></td>
+                        <td>{item.location || "—"} {item.size ? `· ${item.size}` : ""}</td>
+                        <td>
+                          <button className="edit-sub-btn" onClick={() => { setGalleryForm(item); setSelectedGalleryFiles([]); setShowGalleryModal(true); }}>Sửa</button>
+                          <button className="delete-sub-btn" onClick={() => deleteGallery(item.id)}>Xóa</button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* --- TAB REVIEWS --- */}
+        {activeTab === "reviews" && (
+          <div>
+            <div className="section-header">
+              <h2>⭐ Đánh Giá Từ Khách Hàng</h2>
+              <button
+                className="add-btn"
+                onClick={() => {
+                  setReviewForm({ id: "", name: "", role: "", project: "", stars: 5, text: "", avatar: "" });
+                  setSelectedAvatarFile(null);
+                  setShowReviewModal(true);
+                }}
+              >
+                + Thêm Đánh Giá Mới
+              </button>
             </div>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Avatar</th>
+                  <th>Họ Tên</th>
+                  <th>Dự Án</th>
+                  <th>Nội Dung</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reviews.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <img src={r.avatar || "https://via.placeholder.com/40"} alt="" style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
+                    </td>
+                    <td>
+                      <strong>{r.name}</strong>
+                      <div style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{r.role}</div>
+                    </td>
+                    <td>{r.project} ({r.stars}⭐)</td>
+                    <td style={{ maxWidth: "300px", fontSize: "0.9rem" }}>{r.text}</td>
+                    <td>
+                      <button className="edit-sub-btn" onClick={() => { setReviewForm(r); setSelectedAvatarFile(null); setShowReviewModal(true); }}>Sửa</button>
+                      <button className="delete-sub-btn" onClick={() => deleteReview(r.id)}>Xóa</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* --- TAB MATERIALS --- */}
+        {activeTab === "materials" && (
+          <div>
+            <div className="section-header">
+              <h2>⚙️ Danh Mục Vật Liệu Cung Cấp</h2>
+              <button
+                className="add-btn"
+                onClick={() => {
+                  setMaterialForm({ id: "", brand: "", name: "", desc: "", tags: "", icon: "🧱" });
+                  setShowMaterialModal(true);
+                }}
+              >
+                + Thêm Vật Liệu Mới
+              </button>
+            </div>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Icon</th>
+                  <th>Thương hiệu / Tên</th>
+                  <th>Mô tả</th>
+                  <th>Thẻ phân loại</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {materials.map((m) => (
+                  <tr key={m.id}>
+                    <td style={{ fontSize: "1.5rem" }}>{m.icon}</td>
+                    <td>
+                      <div style={{ fontSize: "0.8rem", color: "var(--accent)", fontWeight: "bold" }}>{m.brand}</div>
+                      <strong>{m.name}</strong>
+                    </td>
+                    <td style={{ fontSize: "0.85rem", maxWidth: "250px" }}>{m.desc}</td>
+                    <td>
+                      {m.tags && m.tags.split("|").map((t, idx) => (
+                        <span key={idx} className="badge" style={{ marginRight: "4px" }}>{t}</span>
+                      ))}
+                    </td>
+                    <td>
+                      <button className="edit-sub-btn" onClick={() => { setMaterialForm(m); setShowMaterialModal(true); }}>Sửa</button>
+                      <button className="delete-sub-btn" onClick={() => deleteMaterial(m.id)}>Xóa</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* --- TAB CONTACTS --- */}
+        {activeTab === "contacts" && (
+          <div>
+            <h2>📋 Danh Sách Khách Hàng Để Lại Thông Tin</h2>
+            {loadingContacts ? <p>Đang tải...</p> : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Ngày Gửi</th>
+                    <th>Khách Hàng</th>
+                    <th>Dịch Vụ Yêu Cầu</th>
+                    <th>Ghi Chú Đặc Biệt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.map((c) => (
+                    <tr key={c.id}>
+                      <td style={{ fontSize: "0.85rem" }}>{c.created_at ? new Date(c.created_at).toLocaleString("vi-VN") : "—"}</td>
+                      <td>
+                        <strong>{c.name}</strong>
+                        <div>📞 <a href={`tel:${c.phone}`} style={{ textDecoration: "underline" }}>{c.phone}</a></div>
+                      </td>
+                      <td><span className="badge" style={{ background: "rgba(232,160,32,0.15)", color: "var(--accent)" }}>{c.service || "Tư vấn chung"}</span></td>
+                      <td>{renderContactNote(c.note)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* --- TAB SIMULATOR --- */}
+        {activeTab === "simulator" && (
+          <div>
+            <div className="section-header">
+              <h2>🎮 Quản Lý Ảnh Thực Tế Giả Lập 3D</h2>
+              <button
+                className="add-btn"
+                onClick={() => {
+                  setSimulatorForm({ id: "", room_name: SIMULATOR_ROOMS[0], image: "" });
+                  setSelectedSimulatorFiles([]);
+                  setShowSimulatorModal(true);
+                }}
+              >
+                + Cấu Hình Phòng Mới
+              </button>
+            </div>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Tên Không Gian Phòng</th>
+                  <th>Số Lượng Ảnh Album</th>
+                  <th>Xem Trước Ảnh</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {simulatorItems.map((s) => {
+                  const imgs = s.image ? s.image.split("|").filter(Boolean) : [];
+                  return (
+                    <tr key={s.id}>
+                      <td><strong>{s.room_name}</strong></td>
+                      <td><span className="badge">{imgs.length} Ảnh</span></td>
+                      <td>
+                        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                          {imgs.slice(0, 4).map((img, idx) => (
+                            <img key={idx} src={img} alt="" style={{ width: "40px", height: "30px", objectFit: "cover", borderRadius: "2px" }} />
+                          ))}
+                          {imgs.length > 4 && <span>...</span>}
+                        </div>
+                      </td>
+                      <td>
+                        <button className="edit-sub-btn" onClick={() => { setSimulatorForm(s); setSelectedSimulatorFiles([]); setShowSimulatorModal(true); }}>Sửa Album</button>
+                        <button className="delete-sub-btn" onClick={() => deleteSimulator(s.id)}>Xóa Sạch</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* --- TAB CONFIGS --- */}
+        {activeTab === "configs" && (
+          <div>
+            <h2>🛠️ Cấu Hình Nội Dung Toàn Trang Chủ</h2>
+            <form onSubmit={saveConfigs} className="admin-form-box" style={{ maxWidth: "800px" }}>
+              <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <label>Tên Thương Hiệu</label>
+                  <input type="text" value={configs.brand_name} onChange={(e) => setConfigs({ ...configs, brand_name: e.target.value })} />
+                </div>
+                <div>
+                  <label>Hotline Gọi Điện</label>
+                  <input type="text" value={configs.contact_phone} onChange={(e) => setConfigs({ ...configs, contact_phone: e.target.value })} />
+                </div>
+                <div>
+                  <label>Số Zalo Tư Vấn</label>
+                  <input type="text" value={configs.contact_zalo} onChange={(e) => setConfigs({ ...configs, contact_zalo: e.target.value })} />
+                </div>
+                <div>
+                  <label>Email Liên Hệ</label>
+                  <input type="email" value={configs.contact_email} onChange={(e) => setConfigs({ ...configs, contact_email: e.target.value })} />
+                </div>
+                <div style={{ gridColumn: "span 2" }}>
+                  <label>Địa Chỉ Văn Phòng</label>
+                  <input type="text" value={configs.contact_address} onChange={(e) => setConfigs({ ...configs, contact_address: e.target.value })} />
+                </div>
+                <div>
+                  <label>Màu Đậm Chủ Đạo (Primary)</label>
+                  <input type="color" value={configs.color_primary} onChange={(e) => setConfigs({ ...configs, color_primary: e.target.value })} style={{ height: "40px", padding: 0 }} />
+                </div>
+                <div>
+                  <label>Màu Nhạt Phụ (Secondary)</label>
+                  <input type="color" value={configs.color_secondary} onChange={(e) => setConfigs({ ...configs, color_secondary: e.target.value })} style={{ height: "40px", padding: 0 }} />
+                </div>
+                <div style={{ gridColumn: "span 2" }}>
+                  <label>Dòng Chữ Chạy Hero Tag</label>
+                  <input type="text" value={configs.hero_tag} onChange={(e) => setConfigs({ ...configs, hero_tag: e.target.value })} />
+                </div>
+                <div style={{ gridColumn: "span 2" }}>
+                  <label>Tiêu Đề Lớn Banner (Chấp nhận thẻ &lt;br&gt;, &lt;em&gt;)</label>
+                  <textarea rows={3} value={configs.hero_title} onChange={(e) => setConfigs({ ...configs, hero_title: e.target.value })} />
+                </div>
+                <div style={{ gridColumn: "span 2" }}>
+                  <label>Đoạn Giới Thiệu Banner Phụ (Hero Subtitle)</label>
+                  <textarea rows={3} value={configs.hero_sub} onChange={(e) => setConfigs({ ...configs, hero_sub: e.target.value })} />
+                </div>
+              </div>
+              <button type="submit" className="save-btn" style={{ marginTop: "1.5rem" }} disabled={isSavingConfigs}>
+                {isSavingConfigs ? "⏳ Đang Lưu Cấu Hình..." : "💾 Lưu Thay Đổi Giao Diện"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* --- TAB RECRUITMENT --- */}
+        {activeTab === "recruitment" && (
+          <div>
+            <h2>💼 Danh Sách Thợ Hồ Sơ Ứng Tuyển Tuyển Dụng</h2>
+            {loadingRecruitment ? <p>Đang tải...</p> : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Ngày Ứng Tuyển</th>
+                    <th>Thông Tin Thợ</th>
+                    <th>Vị Trí Ứng Tuyển</th>
+                    <th>Kinh Nghiệm / Tay Nghề</th>
+                    <th>Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recruitmentList.map((r) => (
+                    <tr key={r.id}>
+                      <td style={{ fontSize: "0.85rem" }}>{r.created_at ? new Date(r.created_at).toLocaleString("vi-VN") : "—"}</td>
+                      <td>
+                        <strong>{r.name}</strong>
+                        <div>📞 <a href={`tel:${r.phone}`} style={{ textDecoration: "underline" }}>{r.phone}</a></div>
+                        <div style={{ fontSize: "0.8rem", color: "var(--muted)" }}>📍 {r.area || "Không rõ khu vực"}</div>
+                      </td>
+                      <td><span className="badge" style={{ background: "#4caf50", color: "#fff" }}>{r.role || "Thợ Thạch Cao"}</span></td>
+                      <td style={{ fontSize: "0.9rem", maxWidth: "300px" }}>{r.experience || "Chưa cập nhật"}</td>
+                      <td>
+                        <button className="delete-sub-btn" onClick={() => deleteRecruit(r.id)}>Xóa bỏ</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
       </div>
 
-      {/* --- CÁC MODAL --- */}
-
-      {showSimulatorModal && (
-        <div style={MODAL_WRAPPER_STYLE}>
-          <div className="modal">
-            <button className="modal-close" onClick={() => setShowSimulatorModal(false)}>✕</button>
-            <div className="modal-title">🎮 Cấu Hình Ảnh Phòng 3D</div>
-            <form onSubmit={saveSimulator}>
-              <div className="mf-field">
-                <label className="mf-label">Không Gian Phòng *</label>
-                <select className="mf-select" value={simulatorForm.room_name} onChange={e => setSimulatorForm({...simulatorForm, room_name: e.target.value})} required>
-                  <option value="">-- Chọn phòng --</option>
-                  {SIMULATOR_ROOMS.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
+      {/* ================= MODAL ĐỔI MẬT KHẨU ================= */}
+      {showPasswordModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box">
+            <h3>🔑 Đổi Mật Khẩu Quản Trị Viên</h3>
+            <form onSubmit={handleChangePassword}>
+              <label>Mật khẩu mới</label>
+              <input type="password" required value={passwordForm.new_password} onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })} placeholder="Tối thiểu 6 ký tự" />
+              <label>Xác nhận mật khẩu mới</label>
+              <input type="password" required value={passwordForm.confirm_password} onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })} placeholder="Nhập lại mật khẩu mới" />
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={() => setShowPasswordModal(false)}>Hủy</button>
+                <button type="submit" className="save-btn" disabled={isSavingPassword}>
+                  {isSavingPassword ? "Đang lưu..." : "Cập Nhật Mật Khẩu"}
+                </button>
               </div>
-              {/* Ảnh cũ */}
-              {simulatorForm.image && (
-                <div className="mf-field">
-                  <label className="mf-label">Ảnh hiện có</label>
-                  <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-                    {simulatorForm.image.split("|").filter(Boolean).map((img, idx) => (
-                      <div key={idx} style={{ position: "relative" }}>
-                        <img src={img} style={{ width: 60, height: 50, objectFit: "cover" }} />
-                        <button type="button" onClick={() => handleDeleteSimSubImage(idx)} style={{ position: "absolute", top: 0, right: 0, background: "red", color: "white", border: "none", fontSize: 10 }}>✕</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL GALLERY ================= */}
+      {showGalleryModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box" style={{ maxWidth: "550px" }}>
+            <h3>{galleryForm.id ? "✏️ Sửa Công Trình" : "➕ Thêm Công Trình Mới"}</h3>
+            <form onSubmit={saveGallery}>
+              <label>Tiêu đề công trình</label>
+              <input type="text" required value={galleryForm.title} onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })} placeholder="Ví dụ: Trần thạch cao giật cấp căn hộ" />
+              
+              <label>Hạng mục thi công</label>
+              <select value={galleryForm.category} onChange={(e) => setGalleryForm({ ...galleryForm, category: e.target.value })}>
+                <option value="Trần thạch cao phòng khách">Trần thạch cao phòng khách</option>
+                <option value="Trần thạch cao phòng ngủ">Trần thạch cao phòng ngủ</option>
+                <option value="Vách ngăn thạch cao">Vách ngăn thạch cao cách âm</option>
+                <option value="Trần thả văn phòng">Trần thả / Trần nổi văn phòng</option>
+              </select>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label>Vị trí (Quận/Huyện)</label>
+                  <input type="text" value={galleryForm.location} onChange={(e) => setGalleryForm({ ...galleryForm, location: e.target.value })} placeholder="Quận 7, TP.HCM" />
+                </div>
+                <div>
+                  <label>Diện tích công trình</label>
+                  <input type="text" value={galleryForm.size} onChange={(e) => setGalleryForm({ ...galleryForm, size: e.target.value })} placeholder="120m²" />
+                </div>
+              </div>
+
+              <label>Tải ảnh công trình (Có thể chọn nhiều ảnh cùng lúc)</label>
+              <input type="file" multiple accept="image/*" onChange={handleFileChange} />
+
+              {/* Xem và xóa các ảnh cũ đã tải lên */}
+              {galleryForm.image && (
+                <div style={{ marginTop: "1rem" }}>
+                  <label style={{ fontSize: "0.85rem", color: "var(--muted)" }}>Ảnh hiện tại (Bấm vào nút x để xóa bớt):</label>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                    {galleryForm.image.split("|").filter(Boolean).map((img, idx) => (
+                      <div key={idx} style={{ position: "relative", width: "70px", height: "55px" }}>
+                        <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "4px" }} />
+                        <button type="button" onClick={() => handleDeleteSubImage(idx)} style={{ position: "absolute", top: "-5px", right: "-5px", background: "red", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", fontSize: "10px", cursor: "pointer" }}>x</button>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-              <div className="mf-field">
-                <label className="mf-label">Tải thêm ảnh mới</label>
-                <input className="mf-input" type="file" multiple onChange={handleFileChange} />
-              </div>
-              <div className="modal-footer">
-                <button className="btn-cancel" type="button" onClick={() => setShowSimulatorModal(false)}>Hủy</button>
-                <button className="btn-modal-save" type="submit" disabled={isSavingSimulator}>Lưu Album</button>
+
+              <div className="modal-actions" style={{ marginTop: "1.5rem" }}>
+                <button type="button" className="cancel-btn" onClick={() => setShowGalleryModal(false)}>Hủy đóng</button>
+                <button type="submit" className="save-btn" disabled={isSavingGallery}>
+                  {isSavingGallery ? "⏳ Đang tải ảnh lên..." : "Lưu Công Trình"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {showGalleryModal && (
-        <div style={MODAL_WRAPPER_STYLE}>
-          <div className="modal">
-            <button className="modal-close" onClick={() => setShowGalleryModal(false)}>✕</button>
-            <div className="modal-title">{galleryForm.id ? "✏️ Sửa Album" : "Thêm Công Trình"}</div>
-            <form onSubmit={saveGallery}>
-              <div className="mf-field"><label className="mf-label">Tiêu Đề *</label><input className="mf-input" type="text" value={galleryForm.title} onChange={e => setGalleryForm({...galleryForm, title: e.target.value})} required /></div>
-              <div className="mf-field"><label className="mf-label">Danh Mục</label>
-                <select className="mf-select" value={galleryForm.category} onChange={e => setGalleryForm({...galleryForm, category: e.target.value})} required>
-                  <option value="">Chọn</option><option value="Căn Hộ">Căn Hộ</option><option value="Văn Phòng">Văn Phòng</option><option value="Biệt Thự">Biệt Thự</option>
-                </select>
+      {/* ================= MODAL REVIEWS ================= */}
+      {showReviewModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box">
+            <h3>{reviewForm.id ? "✏️ Sửa Đánh Giá" : "➕ Thêm Đánh Giá Mới"}</h3>
+            <form onSubmit={saveReview}>
+              <label>Tên khách hàng</label>
+              <input type="text" required value={reviewForm.name} onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })} />
+              <label>Chức vụ / Vai trò</label>
+              <input type="text" value={reviewForm.role} onChange={(e) => setReviewForm({ ...reviewForm, role: e.target.value })} placeholder="Chủ căn hộ Vinhomes" />
+              <label>Dự án thực hiện</label>
+              <input type="text" value={reviewForm.project} onChange={(e) => setReviewForm({ ...reviewForm, project: e.target.value })} placeholder="Căn hộ 80m2" />
+              <label>Số sao đánh giá</label>
+              <select value={reviewForm.stars} onChange={(e) => setReviewForm({ ...reviewForm, stars: parseInt(e.target.value) })}>
+                <option value={5}>5 Sao ⭐⭐⭐⭐⭐</option>
+                <option value={4}>4 Sao ⭐⭐⭐⭐</option>
+              </select>
+              <label>Nội dung nhận xét</label>
+              <textarea rows={3} required value={reviewForm.text} onChange={(e) => setReviewForm({ ...reviewForm, text: e.target.value })} />
+              <label>Ảnh đại diện khách hàng</label>
+              <input type="file" accept="image/*" onChange={handleAvatarChange} />
+              
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={() => setShowReviewModal(false)}>Hủy</button>
+                <button type="submit" className="save-btn" disabled={isSavingReview}>
+                  {isSavingReview ? "Đang xử lý..." : "Lưu Đánh Giá"}
+                </button>
               </div>
-              {galleryForm.image && (
-                <div style={{ display: "flex", gap: "5px", marginBottom: 10 }}>
-                   {galleryForm.image.split("|").filter(Boolean).map((img, idx) => (
-                      <div key={idx} style={{ position: "relative" }}>
-                        <img src={img} style={{ width: 60, height: 50, objectFit: "cover" }} />
-                        <button type="button" onClick={() => handleDeleteSubImage(idx)} style={{ position: "absolute", top: 0, right: 0, background: "red", color: "white", border: "none", fontSize: 10 }}>✕</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL MATERIALS ================= */}
+      {showMaterialModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box">
+            <h3>{materialForm.id ? "✏️ Sửa Vật Liệu" : "➕ Thêm Vật Liệu Mới"}</h3>
+            <form onSubmit={saveMaterial}>
+              <label>Thương hiệu sản xuất</label>
+              <input type="text" required value={materialForm.brand} onChange={(e) => setMaterialForm({ ...materialForm, brand: e.target.value })} placeholder="Vĩnh Tường / Knauf" />
+              <label>Tên sản phẩm vật liệu</label>
+              <input type="text" required value={materialForm.name} onChange={(e) => setMaterialForm({ ...materialForm, name: e.target.value })} placeholder="Tấm thạch cao chống ẩm dày 9.5mm" />
+              <label>Mô tả công dụng đặc tính</label>
+              <textarea rows={2} value={materialForm.desc} onChange={(e) => setMaterialForm({ ...materialForm, desc: e.target.value })} />
+              <label>Các thẻ Tag (Ngăn cách bằng dấu gạch đứng |)</label>
+              <input type="text" value={materialForm.tags} onChange={(e) => setMaterialForm({ ...materialForm, tags: e.target.value })} placeholder="Chống ẩm|Thanh C|Mạ kẽm" />
+              <label>Icon hiển thị đại diện</label>
+              <input type="text" value={materialForm.icon} onChange={(e) => setMaterialForm({ ...materialForm, icon: e.target.value })} style={{ width: "80px" }} />
+
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={() => setShowMaterialModal(false)}>Hủy</button>
+                <button type="submit" className="save-btn" disabled={isSavingMaterial}>Lưu Sản Phẩm</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL SIMULATOR 3D ================= */}
+      {showSimulatorModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box" style={{ maxWidth: "520px" }}>
+            <h3>🎮 Thiết Lập Album Giả Lập Không Gian 3D</h3>
+            <form onSubmit={saveSimulator}>
+              <label>Chọn Không Gian Phòng Cần Cấu Hình</label>
+              <select value={simulatorForm.room_name} onChange={(e) => setSimulatorForm({ ...simulatorForm, room_name: e.target.value })} disabled={!!simulatorForm.id}>
+                {SIMULATOR_ROOMS.map((room, idx) => (
+                  <option key={idx} value={room}>{room}</option>
+                ))}
+              </select>
+
+              <label style={{ marginTop: "1rem", display: "block" }}>Chọn thêm ảnh góc nhìn thực tế cho không gian này</label>
+              <input type="file" multiple accept="image/*" onChange={handleSimulatorFileChange} />
+
+              {simulatorForm.image && (
+                <div style={{ marginTop: "1rem" }}>
+                  <label style={{ fontSize: "0.85rem", color: "var(--muted)" }}>Tập ảnh góc nhìn hiện tại trong phòng:</label>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                    {simulatorForm.image.split("|").filter(Boolean).map((img, idx) => (
+                      <div key={idx} style={{ position: "relative", width: "70px", height: "55px" }}>
+                        <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "4px" }} />
+                        <button type="button" onClick={() => handleDeleteSimSubImage(idx)} style={{ position: "absolute", top: "-5px", right: "-5px", background: "red", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", fontSize: "10px", cursor: "pointer" }}>x</button>
                       </div>
                     ))}
+                  </div>
                 </div>
               )}
-              <div className="mf-field"><label className="mf-label">Tải thêm ảnh</label><input className="mf-input" type="file" multiple onChange={handleFileChange} /></div>
-              <div className="modal-footer">
-                <button className="btn-cancel" type="button" onClick={() => setShowGalleryModal(false)}>Hủy</button>
-                <button className="btn-modal-save" type="submit" disabled={isSavingGallery}>💾 Lưu</button>
+
+              <div className="modal-actions" style={{ marginTop: "1.5rem" }}>
+                <button type="button" className="cancel-btn" onClick={() => setShowSimulatorModal(false)}>Hủy bỏ</button>
+                <button type="submit" className="save-btn" disabled={isSavingSimulator}>
+                  {isSavingSimulator ? "⏳ Đang tải ảnh lên..." : "Cập Nhật Không Gian 3D"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {showReviewModal && (
-        <div style={MODAL_WRAPPER_STYLE}>
-          <div className="modal">
-            <button className="modal-close" onClick={() => setShowReviewModal(false)}>✕</button>
-            <div className="modal-title">⭐ Cập Nhật Đánh Giá</div>
-            <form onSubmit={saveReview}>
-               <div className="mf-field"><label className="mf-label">Khách Hàng</label><input className="mf-input" type="text" value={reviewForm.name} onChange={e => setReviewForm({...reviewForm, name: e.target.value})} required /></div>
-               <div className="mf-field"><label className="mf-label">Nội dung</label><textarea className="mf-textarea" value={reviewForm.text} onChange={e => setReviewForm({...reviewForm, text: e.target.value})} required /></div>
-               <div className="modal-footer">
-                <button className="btn-cancel" type="button" onClick={() => setShowReviewModal(false)}>Hủy</button>
-                <button className="btn-modal-save" type="submit" disabled={isSavingReview}>💾 Lưu Đánh Giá</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showMaterialModal && (
-        <div style={MODAL_WRAPPER_STYLE}>
-          <div className="modal">
-            <button className="modal-close" onClick={() => setShowMaterialModal(false)}>✕</button>
-            <div className="modal-title">{materialForm.id ? "✏️ Sửa Vật Liệu" : "Thêm Vật Liệu"}</div>
-            <form onSubmit={saveMaterial}>
-              <div className="mf-row">
-                <div className="mf-field"><label className="mf-label">Hãng *</label><input className="mf-input" type="text" value={materialForm.brand} onChange={e => setMaterialForm({...materialForm, brand: e.target.value})} required /></div>
-                <div className="mf-field"><label className="mf-label">Tên *</label><input className="mf-input" type="text" value={materialForm.name} onChange={e => setMaterialForm({...materialForm, name: e.target.value})} required /></div>
-              </div>
-              <div className="mf-field">
-                <label className="mf-label">Icon</label>
-                <select className="mf-select" value={materialForm.icon} onChange={e => setMaterialForm({...materialForm, icon: e.target.value})} required>
-                   <option value="🧱">🧱 Tường/Gạch</option><option value="💧">💧 Chống ẩm</option><option value="🔥">🔥 Chống cháy</option><option value="🔩">🔩 Khung thép</option><option value="🎨">🎨 Sơn nước</option>
-                </select>
-              </div>
-              <div className="mf-field"><label className="mf-label">Mô tả</label><textarea className="mf-textarea" value={materialForm.desc} onChange={e => setMaterialForm({...materialForm, desc: e.target.value})} required /></div>
-              <div className="modal-footer">
-                <button className="btn-cancel" type="button" onClick={() => setShowMaterialModal(false)}>Hủy</button>
-                <button className="btn-modal-save" type="submit" disabled={isSavingMaterial}>💾 Lưu Vật Liệu</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showPasswordModal && (
-        <div style={MODAL_WRAPPER_STYLE}>
-          <div className="modal">
-            <button className="modal-close" onClick={() => setShowPasswordModal(false)}>✕</button>
-            <div className="modal-title">🔑 Đổi Mật Khẩu</div>
-            <form onSubmit={handleChangePassword}>
-              <div className="mf-field"><label className="mf-label">Mật khẩu mới</label><input className="mf-input" type="password" value={passwordForm.new_password} onChange={e => setPasswordForm({...passwordForm, new_password: e.target.value})} required /></div>
-              <div className="mf-field"><label className="mf-label">Xác nhận</label><input className="mf-input" type="password" value={passwordForm.confirm_password} onChange={e => setPasswordForm({...passwordForm, confirm_password: e.target.value})} required /></div>
-              <button className="btn-modal-save" type="submit" style={{ width: '100%' }}>Lưu Mật Khẩu</button>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
